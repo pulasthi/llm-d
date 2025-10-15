@@ -25,6 +25,13 @@ repos:
         files: ^docker/scripts/.*\.sh$
         types: [shell]
 
+      - id: lint-envvars
+        name: lint environment variables
+        language: script
+        entry: scripts/lint-envvars.py
+        files: ^docker/scripts/.*\.sh$
+        types: [shell]
+
   # dockerfile linting
   - repo: local
     hooks:
@@ -35,6 +42,14 @@ repos:
         args: [--failure-threshold, error]
         files: Dockerfile.*
         types: [file]
+
+      - id: lint-dockerfile-envvars
+        name: lint dockerfile environment variables
+        language: script
+        entry: scripts/lint-dockerfile-envvars.py
+        args: [docker/scripts]
+        files: ^docker/Dockerfile\.
+        pass_filenames: true
 
   # markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli

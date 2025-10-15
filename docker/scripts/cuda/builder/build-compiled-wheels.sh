@@ -2,7 +2,19 @@
 set -Eeuo pipefail
 
 # builds compiled extension wheels (FlashInfer, DeepEP, DeepGEMM, pplx-kernels)
-# expects VIRTUAL_ENV, CUDA_MAJOR, NVSHMEM_DIR, DEEPEP_*, DEEPGEMM_*, PPLX_KERNELS_* env vars
+#
+# Required environment variables:
+# - VIRTUAL_ENV: path to Python virtual environment
+# - CUDA_MAJOR: CUDA major version (e.g., 12)
+# - NVSHMEM_DIR: NVSHMEM installation directory
+# - FLASHINFER_VERSION: FlashInfer version tag
+# - DEEPEP_REPO: DeepEP repository URL
+# - DEEPEP_VERSION: DeepEP version tag
+# - DEEPGEMM_REPO: DeepGEMM repository URL
+# - DEEPGEMM_VERSION: DeepGEMM version tag
+# - PPLX_KERNELS_REPO: pplx-kernels repository URL
+# - PPLX_KERNELS_SHA: pplx-kernels commit SHA
+# - USE_SCCACHE: whether to use sccache (true/false)
 
 # shellcheck source=/dev/null
 source "${VIRTUAL_ENV}/bin/activate"

@@ -2,7 +2,12 @@
 set -Eeuo pipefail
 
 # installs vllm and dependencies in runtime stage
-# expects VIRTUAL_ENV, CUDA_MAJOR, VLLM_REPO, VLLM_COMMIT_SHA, VLLM_PREBUILT, VLLM_USE_PRECOMPILED env vars
+#
+# Required environment variables:
+# - VLLM_REPO: vLLM git repository URL
+# - VLLM_COMMIT_SHA: vLLM commit SHA to checkout
+# - VLLM_PREBUILT: whether to use prebuilt wheel (1/0)
+# - VLLM_USE_PRECOMPILED: whether to use precompiled binaries (1/0)
 
 # shellcheck source=/dev/null
 source /opt/vllm/bin/activate

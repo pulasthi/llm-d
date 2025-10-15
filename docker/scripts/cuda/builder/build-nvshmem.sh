@@ -2,7 +2,14 @@
 set -Eeuo pipefail
 
 # builds and installs NVSHMEM from source with coreweave patch
-# expects CUDA_MAJOR, NVSHMEM_VERSION, NVSHMEM_DIR, NVSHMEM_CUDA_ARCHITECTURES env vars to be set
+#
+# Required environment variables:
+# - CUDA_MAJOR: CUDA major version (e.g., 12)
+# - NVSHMEM_VERSION: NVSHMEM version to build (e.g., 3.3.20)
+# - NVSHMEM_DIR: NVSHMEM installation directory
+# - NVSHMEM_CUDA_ARCHITECTURES: CUDA architectures to build for
+# - PYTHON_VERSION: Python version for wheel naming
+# - USE_SCCACHE: whether to use sccache (true/false)
 
 cd /tmp
 

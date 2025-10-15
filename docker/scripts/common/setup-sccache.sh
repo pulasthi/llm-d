@@ -1,6 +1,8 @@
 #!/bin/bash
 # sets up sccache environment variables and starts the server
-# expects USE_SCCACHE env var to be set
+#
+# Required environment variables:
+# - USE_SCCACHE: whether to configure and start sccache (true/false)
 
 if [ "${USE_SCCACHE}" = "true" ]; then
     # set up AWS credentials if secrets are available

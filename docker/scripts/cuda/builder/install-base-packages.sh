@@ -2,7 +2,9 @@
 set -Eeuo pipefail
 
 # installs base packages, EPEL, and CUDA repository
-# expects PYTHON_VERSION env var to be set
+#
+# Required environment variables:
+# - PYTHON_VERSION: Python version to install (e.g., 3.12)
 
 dnf -q install -y dnf-plugins-core
 dnf -q install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm

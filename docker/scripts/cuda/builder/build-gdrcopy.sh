@@ -2,6 +2,9 @@
 set -Eeuo pipefail
 
 # builds and installs gdrcopy from source
+#
+# Required environment variables:
+# - USE_SCCACHE: whether to use sccache (true/false)
 
 # shellcheck source=/dev/null
 source /usr/local/bin/setup-sccache

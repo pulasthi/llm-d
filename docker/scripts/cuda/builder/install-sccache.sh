@@ -2,6 +2,9 @@
 set -Eeuo pipefail
 
 # installs sccache binary from github releases and verifies connectivity
+#
+# Required environment variables:
+# - USE_SCCACHE: whether to install and configure sccache (true/false)
 
 if [ "${USE_SCCACHE}" = "true" ]; then
     dnf install -y openssl-devel
