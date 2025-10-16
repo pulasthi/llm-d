@@ -102,7 +102,7 @@ RUN dnf -q install -y dnf-plugins-core && \
         DOWNLOAD_ARCH="x86_64"; \
     fi; \
     dnf config-manager --add-repo "https://developer.download.nvidia.com/compute/cuda/repos/rhel9/${DOWNLOAD_ARCH}/cuda-rhel9.repo" && \
-    dnf -q install -y --allowerasing \
+    dnf -q install -y --allowerasing --exclude='*cuda13*' \
         python${PYTHON_VERSION} python${PYTHON_VERSION}-pip python${PYTHON_VERSION}-wheel \
         python${PYTHON_VERSION}-devel \
         python3.9-devel \
@@ -128,8 +128,8 @@ RUN dnf -q install -y dnf-plugins-core && \
         ninja-build \
         xz \
         rsync \
-        "libnccl-*+cuda${CUDA_MAJOR}.${CUDA_MINOR}" \
-        "libnccl-devel-*+cuda${CUDA_MAJOR}.${CUDA_MINOR}" \
+        libnccl \
+        libnccl-devel \
     && dnf clean all
 
 # Setup Python virtual environment
@@ -342,7 +342,7 @@ ENV LANG=C.UTF-8 \
 RUN dnf update -y && dnf clean all
 
 # Install only runtime dependencies
-RUN dnf install -y --allowerasing \
+RUN dnf install -y --allowerasing --exclude='*cuda13*' \
         python${PYTHON_VERSION} python${PYTHON_VERSION}-pip python${PYTHON_VERSION}-devel \
         rdma-core-devel \
         numactl-libs \
@@ -352,7 +352,7 @@ RUN dnf install -y --allowerasing \
         curl \
         jq \
         gcc \
-        "libnccl-*+cuda${CUDA_MAJOR}.${CUDA_MINOR}" && dnf clean all
+        libnccl && dnf clean all
 
 # Copy gdrcopy libraries from builder
 COPY --from=builder /usr/lib64/libgdrapi.so.2.* /usr/lib64/
