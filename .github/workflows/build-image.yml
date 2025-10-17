@@ -222,15 +222,21 @@ jobs:
         id: manifest
         working-directory: /tmp/digests
         run: |
-          # create manifest list from platform-specific digests
+          # build the list of source images (by digest)
+          sources=""
+          for digest in *; do
+            sources="$sources ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev@sha256:$digest"
+          done
+
+          # create manifest and tag it
           docker buildx imagetools create \
-            $(echo "${{ steps.meta.outputs.tags }}" | tr '\n' ' ' | sed 's/ */ /g' | \
-              awk '{for(i=1;i<=NF;i++) printf("-t %s ", $i)}') \
-            $(printf '${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev@sha256:%s ' *)
+            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev:pr-${{ github.event.pull_request.number }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev:sha-${GITHUB_SHA::7} \
+            $sources
 
           # extract final manifest digest
           MANIFEST_DIGEST=$(docker buildx imagetools inspect \
-            ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev:${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev:sha-${GITHUB_SHA::7} \
             --format '{{.Manifest.Digest}}')
           echo "digest=${MANIFEST_DIGEST}" >> $GITHUB_OUTPUT
 
