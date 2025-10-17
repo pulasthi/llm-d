@@ -183,6 +183,32 @@ check_existing_node_exporter() {
 
 }
 
+check_prometheus_operator() {
+  log_info "🔍 Checking for existing Prometheus operator installations..."
+  # Shared clusters may have pre-existing Prometheus operators installed,
+  # and installing another operator can cause conflicts with resources like alertmanager
+
+  # Check for prometheus-operator pods in other namespaces
+  local existing_operators=$($KCMD get pods --all-namespaces -l app.kubernetes.io/name=prometheus-operator -o name 2>/dev/null | wc -l)
+
+  if [[ $existing_operators -eq 0 ]]; then
+    # Also check for common prometheus-operator naming patterns
+    existing_operators=$($KCMD get pods --all-namespaces | grep -E "prometheus-operator" | grep -v "${MONITORING_NAMESPACE}" | wc -l)
+  fi
+
+  if [[ $existing_operators -gt 0 ]]; then
+    log_info "⚠️ Found $existing_operators existing Prometheus operator pod(s) in other namespaces"
+    log_info "ℹ️ Prometheus operator will be disabled to avoid resource conflicts"
+    # Show which namespaces have prometheus operators
+    log_info "📋 Existing Prometheus operator pods:"
+    $KCMD get pods --all-namespaces | grep -E "prometheus-operator" | grep -v "${MONITORING_NAMESPACE}" | head -3
+    return 0  # Existing operator found, should disable
+  else
+    log_info "✅ No existing Prometheus operator installations detected"
+    return 1  # No existing operator, can enable
+  fi
+}
+
 check_openshift_monitoring() {
   if ! is_openshift; then
     return 0
@@ -252,7 +278,8 @@ install_prometheus_grafana() {
   fi
 
   # Check if release already exists using the same naming scheme
-  RELEASE_NAME="prometheus-${MONITORING_NAMESPACE}"
+  # Use short release name to avoid Kubernetes 63-char service name limit
+  RELEASE_NAME="llmd"
 
   if $HCMD list -n "${MONITORING_NAMESPACE}" | grep -q "${RELEASE_NAME}"; then
     log_info "⚠️ Prometheus stack already installed as '${RELEASE_NAME}' in ${MONITORING_NAMESPACE} namespace"
@@ -264,9 +291,21 @@ install_prometheus_grafana() {
     return 0
   fi
 
-  # Check if CRDs already exist (installed by another user)
-  if check_servicemonitor_crd; then
-    log_info "🔄 ServiceMonitor CRDs already exist - installing without CRDs to avoid conflicts"
+  # Check for existing prometheus operator and determine if we should disable it
+  local DISABLE_PROMETHEUS_OPERATOR=""
+  local OPERATOR_EXISTS=false
+  if check_prometheus_operator; then
+    DISABLE_PROMETHEUS_OPERATOR="prometheusOperator:\n  enabled: false"
+    OPERATOR_EXISTS=true
+  fi
+
+  # Check if CRDs already exist (installed by another user or by existing operator)
+  if check_servicemonitor_crd || [[ "$OPERATOR_EXISTS" == "true" ]]; then
+    if [[ "$OPERATOR_EXISTS" == "true" ]]; then
+      log_info "🔄 Existing Prometheus operator manages CRDs - installing without CRDs to avoid conflicts"
+    else
+      log_info "🔄 ServiceMonitor CRDs already exist - installing without CRDs to avoid conflicts"
+    fi
     CRD_INSTALL_FLAG="--skip-crds"
   else
     log_info "🆕 Installing Prometheus stack with CRDs"
@@ -289,6 +328,15 @@ grafana:
   service:
     type: ClusterIP
     sessionAffinity: ""
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://${RELEASE_NAME}-kube-prom-prometheus.${MONITORING_NAMESPACE}.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
 prometheus:
   service:
     type: ClusterIP
@@ -310,6 +358,7 @@ prometheus:
       requests:
         memory: 4Gi
         cpu: 1000m
+$(if [[ -n "$DISABLE_PROMETHEUS_OPERATOR" ]]; then echo -e "$DISABLE_PROMETHEUS_OPERATOR"; fi)
 $(if [[ -n "$DISABLE_NODE_EXPORTER" ]]; then echo -e "$DISABLE_NODE_EXPORTER"; fi)
 EOF
   else
@@ -320,6 +369,15 @@ grafana:
   service:
     type: ClusterIP
     sessionAffinity: ""
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://${RELEASE_NAME}-kube-prom-prometheus.${MONITORING_NAMESPACE}.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
 prometheus:
   service:
     type: ClusterIP
@@ -349,12 +407,10 @@ prometheus:
       requests:
         memory: 2Gi
         cpu: 500m
+$(if [[ -n "$DISABLE_PROMETHEUS_OPERATOR" ]]; then echo -e "$DISABLE_PROMETHEUS_OPERATOR"; fi)
 $(if [[ -n "$DISABLE_NODE_EXPORTER" ]]; then echo -e "$DISABLE_NODE_EXPORTER"; fi)
 EOF
   fi
-
-  # Use unique release name based on namespace to avoid conflicts
-  RELEASE_NAME="prometheus-${MONITORING_NAMESPACE}"
 
   # Apply CRDs first without validation for int32 v int64 unrecognized format
   if [ "${CRD_INSTALL_FLAG:-}" != "--skip-crds" ]; then
@@ -379,8 +435,8 @@ EOF
 
   # Display access information
   log_info "📊 Access Information:"
-  log_info "   Prometheus: kubectl port-forward -n ${MONITORING_NAMESPACE} svc/prometheus-kube-prometheus-prometheus 9090:9090"
-  log_info "   Grafana: kubectl port-forward -n ${MONITORING_NAMESPACE} svc/prometheus-grafana 3000:80"
+  log_info "   Prometheus: kubectl port-forward -n ${MONITORING_NAMESPACE} svc/${RELEASE_NAME}-kube-prom-prometheus 9090:9090"
+  log_info "   Grafana: kubectl port-forward -n ${MONITORING_NAMESPACE} svc/${RELEASE_NAME}-grafana 3000:80"
   log_info "   Grafana admin password: admin"
   log_info ""
   log_info "📋 Monitoring Configuration:"
@@ -420,7 +476,7 @@ uninstall() {
   log_info "🗑️ Uninstalling Prometheus and Grafana stack..."
 
   # Use the same release naming scheme as install
-  RELEASE_NAME="prometheus-${MONITORING_NAMESPACE}"
+  RELEASE_NAME="llmd"
 
   if $HCMD list -n "${MONITORING_NAMESPACE}" | grep -q "${RELEASE_NAME}" 2>/dev/null; then
     log_info "🗑️ Uninstalling Prometheus helm release '${RELEASE_NAME}'..."
