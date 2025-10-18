@@ -147,8 +147,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           provenance: false
-          cache-from: type=gha,scope=cuda-${{ steps.platform.outputs.arch }}
-          cache-to: type=gha,mode=max,scope=cuda-${{ steps.platform.outputs.arch }}
+          cache-from: ${{ matrix.platform == 'linux/arm64' && 'type=gha,scope=cuda-arm64' || '' }}
+          cache-to: ${{ matrix.platform == 'linux/arm64' && 'type=gha,mode=max,scope=cuda-arm64' || '' }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: >-
             type=image,name=${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev,
