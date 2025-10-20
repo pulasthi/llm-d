@@ -8,9 +8,13 @@ set -Eeu
 # - VLLM_COMMIT_SHA: vLLM commit SHA to checkout
 # - VLLM_PREBUILT: whether to use prebuilt wheel (1/0)
 # - VLLM_USE_PRECOMPILED: whether to use precompiled binaries (1/0)
+# - VLLM_PRECOMPILED_WHEEL_COMMIT: commit SHA for precompiled wheel lookup (defaults to VLLM_COMMIT_SHA)
 
 # shellcheck source=/dev/null
 source /opt/vllm/bin/activate
+
+# default VLLM_PRECOMPILED_WHEEL_COMMIT to VLLM_COMMIT_SHA if not set
+VLLM_PRECOMPILED_WHEEL_COMMIT="${VLLM_PRECOMPILED_WHEEL_COMMIT:-${VLLM_COMMIT_SHA}}"
 
 # build list of packages to install
 INSTALL_PACKAGES=(
@@ -26,56 +30,30 @@ git -C /opt/vllm-source config --system --add safe.directory /opt/vllm-source
 git -C /opt/vllm-source fetch --depth=1 origin "${VLLM_COMMIT_SHA}" || true
 git -C /opt/vllm-source checkout -q "${VLLM_COMMIT_SHA}"
 
-# detect architecture and construct wheel URL
-ARCH=$(uname -m)
-case "${ARCH}" in
-  aarch64)
-    PLATFORM_TAG="manylinux2014_aarch64"
-    ;;
-  x86_64)
-    PLATFORM_TAG="manylinux1_x86_64"
-    ;;
-  *)
-    echo "Unsupported architecture: ${ARCH}"
-    exit 1
-    ;;
-esac
-
-# try to find wheel with correct platform tag
-WHEEL_INDEX="https://wheels.vllm.ai/${VLLM_COMMIT_SHA}/vllm/"
-WHEEL_FILENAME=$(curl -sL "${WHEEL_INDEX}" | grep -o "href=\"[^\"]*${PLATFORM_TAG}[^\"]*\"" | cut -d'"' -f2 | sed 's|^\.\./||' | head -1)
-
-if [ -n "${WHEEL_FILENAME}" ]; then
-  # arm wheels are uploaded without +cuXXX suffix, but html index includes it
-  if [ "${ARCH}" = "aarch64" ]; then
-    WHEEL_FILENAME=$(echo "${WHEEL_FILENAME}" | sed 's/%2Bcu[0-9][0-9]*//')
-  fi
-
-  # wheel is in parent directory relative to /vllm/ listing
-  WHEEL_URL="https://wheels.vllm.ai/${VLLM_COMMIT_SHA}/${WHEEL_FILENAME}"
-
-  # verify wheel actually exists (vllm index sometimes lists wheels that weren't uploaded)
-  if curl -IsL "${WHEEL_URL}" | head -1 | grep -q "200"; then
-    echo "Found and verified wheel for ${PLATFORM_TAG}: ${WHEEL_URL}"
-  else
-    echo "Wheel listed but not found on server (404): ${WHEEL_URL}"
-    WHEEL_URL=""
-  fi
-else
-  echo "No wheel found for platform ${PLATFORM_TAG} at ${WHEEL_INDEX}"
-  WHEEL_URL=""
-fi
+# detect if prebuilt wheel exists (using VLLM_PRECOMPILED_WHEEL_COMMIT for lookup)
+WHEEL_URL=$(pip install \
+  --no-cache-dir \
+  --no-index \
+  --no-deps \
+  --find-links "https://wheels.vllm.ai/${VLLM_PRECOMPILED_WHEEL_COMMIT}/vllm/" \
+  --only-binary=:all: \
+  --pre vllm \
+  --dry-run \
+  --disable-pip-version-check \
+  -qqq \
+  --report - \
+  2>/dev/null | jq -r '.install[0].download_info.url')
 
 if [ "${VLLM_PREBUILT}" = "1" ]; then
   if [ -z "${WHEEL_URL}" ]; then
-    echo "VLLM_PREBUILT set but no platform compatible wheel exists for: https://wheels.vllm.ai/${VLLM_COMMIT_SHA}/vllm/"
+    echo "VLLM_PREBUILT set but no platform compatible wheel exists for: https://wheels.vllm.ai/${VLLM_PRECOMPILED_WHEEL_COMMIT}/vllm/"
     exit 1
   fi
   INSTALL_PACKAGES+=("${WHEEL_URL}")
   rm /opt/warn-vllm-precompiled.sh
 else
   if [ "${VLLM_USE_PRECOMPILED}" = "1" ] && [ -n "${WHEEL_URL}" ]; then
-    echo "Using precompiled binaries and shared libraries for commit: ${VLLM_COMMIT_SHA}."
+    echo "Using precompiled binaries and shared libraries from commit: ${VLLM_PRECOMPILED_WHEEL_COMMIT} (source: ${VLLM_COMMIT_SHA})."
     export VLLM_USE_PRECOMPILED=1
     export VLLM_PRECOMPILED_WHEEL_LOCATION="${WHEEL_URL}"
     INSTALL_PACKAGES+=(-e /opt/vllm-source)

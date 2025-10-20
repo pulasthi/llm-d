@@ -13,6 +13,27 @@ on:
       - .github/workflows/build-image.yml
       - docker/**
       - patches/**
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build (comma-separated: cuda,aws,gke,xpu)'
+        required: false
+        default: 'cuda'
+        type: string
+      vllm_repo:
+        description: 'vLLM repository URL'
+        required: false
+        default: 'https://github.com/vllm-project/vllm.git'
+        type: string
+      vllm_commit_sha:
+        description: 'vLLM commit SHA to checkout for source'
+        required: false
+        default: 'b8b302cde434df8c9289a2b465406b47ebab1c2d'
+        type: string
+      vllm_precompiled_wheel_commit:
+        description: 'vLLM commit SHA for precompiled wheel lookup (defaults to vllm_commit_sha)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -59,13 +80,14 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      cuda: ${{ steps.filter.outputs.cuda }}
-      xpu: ${{ steps.filter.outputs.xpu }}
-      aws: ${{ steps.filter.outputs.aws }}
-      gke: ${{ steps.filter.outputs.gke }}
+      cuda: ${{ steps.filter.outputs.cuda || steps.dispatch.outputs.cuda }}
+      xpu: ${{ steps.filter.outputs.xpu || steps.dispatch.outputs.xpu }}
+      aws: ${{ steps.filter.outputs.aws || steps.dispatch.outputs.aws }}
+      gke: ${{ steps.filter.outputs.gke || steps.dispatch.outputs.gke }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
+        if: github.event_name != 'workflow_dispatch'
         id: filter
         with:
           filters: |
@@ -83,6 +105,16 @@ jobs:
               - 'docker/scripts/**'
             gke:
               - 'docker/Dockerfile.gke'
+      # shim to convert comma-separated platforms input into same boolean outputs as path filter
+      - name: Parse dispatch platforms
+        if: github.event_name == 'workflow_dispatch'
+        id: dispatch
+        run: |
+          platforms="${{ inputs.platforms }}"
+          echo "cuda=$(echo $platforms | grep -q cuda && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "aws=$(echo $platforms | grep -q aws && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "gke=$(echo $platforms | grep -q gke && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "xpu=$(echo $platforms | grep -q xpu && echo true || echo false)" >> $GITHUB_OUTPUT
 
   cuda-build-llm-d:
     needs: [pre-commit, detect-changes]
@@ -167,6 +199,9 @@ jobs:
           build-args: |
             TARGETOS=${{ matrix.os }}
             BASE_IMAGE_SUFFIX=${{ matrix.base_image_suffix }}
+            VLLM_REPO=${{ inputs.vllm_repo || 'https://github.com/vllm-project/vllm.git' }}
+            VLLM_COMMIT_SHA=${{ inputs.vllm_commit_sha || 'b8b302cde434df8c9289a2b465406b47ebab1c2d' }}
+            VLLM_PRECOMPILED_WHEEL_COMMIT=${{ inputs.vllm_precompiled_wheel_commit || inputs.vllm_commit_sha || '' }}
           cache-from: >-
             ${{ matrix.platform == 'linux/arm64' &&
             format('type=gha,scope=cuda-{0}-arm64', matrix.os) || '' }}
