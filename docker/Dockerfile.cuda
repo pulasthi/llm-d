@@ -94,7 +94,7 @@ RUN mkdir -p /usr/bin/nvshmem_${CUDA_MAJOR} && \
 # as vllm itself
 # hadolint ignore=SC1091
 RUN --mount=type=cache,target=/root/.cache/uv \
-  source ${VIRTUAL_ENV}/bin/activate && \
+  . ${VIRTUAL_ENV}/bin/activate && \
   uv pip install \
     # global
     numpy torch \
@@ -123,7 +123,7 @@ RUN --mount=type=cache,target=/var/cache/git \
         git checkout -q "${LMCACHE_COMMIT_SHA}" && \
         cd .. && \
         cd LMCache && \
-        source ${VIRTUAL_ENV}/bin/activate && \
+        . ${VIRTUAL_ENV}/bin/activate && \
         uv build --wheel --no-build-isolation --out-dir /wheels  && \
         cd ..; \
     else \
@@ -248,7 +248,7 @@ RUN --mount=type=cache,target=/var/cache/git \
 COPY docker/scripts/cuda/common/package-utils.sh /tmp/package-utils.sh
 RUN chmod +x /tmp/package-utils.sh && \
     # shellcheck source=docker/scripts/cuda/common/package-utils.sh
-    source /tmp/package-utils.sh && \
+    . /tmp/package-utils.sh && \
     autoremove_packages ${TARGETOS} && \
     cleanup_packages ${TARGETOS} && \
     rm /tmp/package-utils.sh
