@@ -1,0 +1,22 @@
+{
+  "rhel_to_ubuntu": {
+    "python${PYTHON_VERSION}": "python${PYTHON_VERSION}",
+    "python${PYTHON_VERSION}-pip": "python3-pip",
+    "python${PYTHON_VERSION}-devel": "python${PYTHON_VERSION}-dev",
+    "rdma-core-devel": "librdmacm-dev",
+    "numactl-libs": "libnuma1",
+    "pciutils": "pciutils",
+    "procps-ng": "procps",
+    "git": "git",
+    "curl": "curl",
+    "jq": "jq",
+    "gcc": "gcc",
+    "cuda-nvcc-${CUDA_MAJOR}-${CUDA_MINOR}": "cuda-nvcc-${CUDA_MAJOR}-${CUDA_MINOR}",
+    "libnvshmem3-cuda-${CUDA_MAJOR}-3.4.5-1": "libnvshmem3-cuda-${CUDA_MAJOR}=3.4.5-1",
+    "libnvshmem3-devel-cuda-${CUDA_MAJOR}-3.4.5-1": "libnvshmem3-dev-cuda-${CUDA_MAJOR}=3.4.5-1",
+    "libnvshmem3-static-cuda-${CUDA_MAJOR}-3.4.5-1": "libnvshmem3-static-cuda-${CUDA_MAJOR}=3.4.5-1"
+  },
+  "ubuntu_only": [
+    "python${PYTHON_VERSION}-venv"
+  ]
+}

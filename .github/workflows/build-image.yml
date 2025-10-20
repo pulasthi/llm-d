@@ -72,6 +72,7 @@ jobs:
             cuda:
               - 'docker/Dockerfile.cuda'
               - 'docker/scripts/**'
+              - 'docker/scripts/cuda/**/*.json'
               - 'patches/cks_nvshmem3.3.20.patch'
               - 'patches/cks_nvshmem3.3.9.patch'
             xpu:
@@ -88,12 +89,28 @@ jobs:
     if: ${{ needs.detect-changes.outputs.cuda == 'true' }}
     strategy:
       fail-fast: false
+      # multi-OS build matrix: creates 4 images (2 platforms × 2 OS variants)
+      # - RHEL (ubi9): default/production image (no suffix in final tags)
+      # - Ubuntu (24.04): alternative base for compatibility testing (-ubuntu suffix)
+      # resulting manifests: cuda-dev (rhel) and cuda-dev-ubuntu
       matrix:
         include:
           - platform: linux/amd64
             runner: vllm-runner
+            os: rhel
+            base_image_suffix: ubi9
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
+            os: rhel
+            base_image_suffix: ubi9
+          - platform: linux/amd64
+            runner: vllm-runner
+            os: ubuntu
+            base_image_suffix: ubuntu24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            os: ubuntu
+            base_image_suffix: ubuntu24.04
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Free disk space (ARM only)
@@ -147,8 +164,15 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           provenance: false
-          cache-from: ${{ matrix.platform == 'linux/arm64' && 'type=gha,scope=cuda-arm64' || '' }}
-          cache-to: ${{ matrix.platform == 'linux/arm64' && 'type=gha,mode=max,scope=cuda-arm64' || '' }}
+          build-args: |
+            TARGETOS=${{ matrix.os }}
+            BASE_IMAGE_SUFFIX=${{ matrix.base_image_suffix }}
+          cache-from: >-
+            ${{ matrix.platform == 'linux/arm64' &&
+            format('type=gha,scope=cuda-{0}-arm64', matrix.os) || '' }}
+          cache-to: >-
+            ${{ matrix.platform == 'linux/arm64' &&
+            format('type=gha,mode=max,scope=cuda-{0}-arm64', matrix.os) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: >-
             type=image,name=${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev,
@@ -170,7 +194,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-cuda-${{ steps.platform.outputs.arch }}
+          name: digests-cuda-${{ matrix.os }}-${{ steps.platform.outputs.arch }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -178,12 +202,22 @@ jobs:
   cuda-manifest:
     needs: cuda-build-llm-d
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [rhel, ubuntu]
+        include:
+          # RHEL is the default image (no suffix in image name)
+          - os: rhel
+            image_suffix: ""
+          # Ubuntu images are tagged with -ubuntu suffix
+          - os: ubuntu
+            image_suffix: "-ubuntu"
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
-          pattern: digests-cuda-*
+          pattern: digests-cuda-${{ matrix.os }}-*
           merge-multiple: true
 
       - name: Debug digest files
@@ -193,7 +227,8 @@ jobs:
           echo "=== Files matched by glob * ==="
           cd /tmp/digests && printf '%s\n' *
           echo "=== Test manifest command construction ==="
-          cd /tmp/digests && printf '${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev@sha256:%s ' *
+          cd /tmp/digests && \
+            printf '${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}@sha256:%s ' *
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -209,7 +244,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev
+          images: ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -228,20 +263,23 @@ jobs:
 
           # create manifest and tag it
           docker buildx imagetools create \
-            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev:pr-${{ github.event.pull_request.number }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev:sha-${GITHUB_SHA::7} \
+            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:pr-${{
+              github.event.pull_request.number }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:sha-${GITHUB_SHA::7} \
             $sources
 
           # extract final manifest digest
           MANIFEST_DIGEST=$(docker buildx imagetools inspect \
-            ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev:sha-${GITHUB_SHA::7} \
+            ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:sha-${GITHUB_SHA::7} \
             | awk '/^Digest:/ {print $2}')
           echo "digest=${MANIFEST_DIGEST}" >> $GITHUB_OUTPUT
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev@${{ steps.manifest.outputs.digest }}
+          image-ref: >-
+            ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}@${{
+              steps.manifest.outputs.digest }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
