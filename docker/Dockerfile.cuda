@@ -36,6 +36,8 @@ COPY docker/constraints.txt /tmp/constraints.txt
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
+    UV_HTTP_TIMEOUT=500 \
+    UV_INDEX_STRATEGY=unsafe-best-match \
     UV_LINK_MODE=copy \
     TORCH_CUDA_ARCH_LIST="9.0a;10.0+PTX" \
     PYTHON_VERSION=${PYTHON_VERSION:-3.12} \
@@ -61,11 +63,13 @@ RUN --mount=type=secret,id=aws_access_key_id \
     TARGETOS=${TARGETOS} /tmp/install-sccache.sh && \
     rm /tmp/install-sccache.sh
 
-# Setup Python virtual environment
-RUN python${PYTHON_VERSION} -m venv /opt/vllm && \
-    ${VIRTUAL_ENV}/bin/pip install --progress-bar off --no-cache -U pip wheel uv meson-python ninja pybind11 build
+# Install uv and setup Python virtual environment
+RUN UV_INSTALL_DIR=/usr/local/bin curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    uv venv /opt/vllm --python ${PYTHON_VERSION} && \
+    uv pip install --no-cache -U wheel meson-python ninja pybind11 build
 
-ENV LIBRARY_PATH="/usr/local/cuda/lib64:/usr/local/lib:/usr/local/lib64" \
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
+    LIBRARY_PATH="/usr/local/cuda/lib64:/usr/local/lib:/usr/local/lib64" \
     CPATH="/usr/include:/usr/local/include:/usr/local/cuda/include" \
     PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig"
 
@@ -242,9 +246,10 @@ RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf && \
     echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf && \
     ldconfig
 
-# Setup Python virtual environment
-RUN python${PYTHON_VERSION} -m venv /opt/vllm && \
-    ${VIRTUAL_ENV}/bin/pip install --no-cache -U pip wheel uv
+# Install uv and setup Python virtual environment
+RUN UV_INSTALL_DIR=/usr/local/bin curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    uv venv /opt/vllm --python ${PYTHON_VERSION} && \
+    uv pip install --no-cache -U wheel
 
 # Copy compiled wheels
 COPY --from=builder /wheels/*.whl /tmp/wheels/

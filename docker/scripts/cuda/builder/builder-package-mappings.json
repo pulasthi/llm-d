@@ -1,9 +1,9 @@
 {
   "rhel_to_ubuntu": {
-    "python${PYTHON_VERSION}": "python${PYTHON_VERSION}",
-    "python${PYTHON_VERSION}-pip": "python3-pip",
-    "python${PYTHON_VERSION}-wheel": "python3-wheel",
-    "python${PYTHON_VERSION}-devel": "python${PYTHON_VERSION}-dev",
+    "python${PYTHON_VERSION}": null,
+    "python${PYTHON_VERSION}-pip": null,
+    "python${PYTHON_VERSION}-wheel": null,
+    "python${PYTHON_VERSION}-devel": null,
     "which": null,
     "procps": "procps",
     "findutils": "findutils",
@@ -39,7 +39,6 @@
     "libnvshmem3-static-cuda-${CUDA_MAJOR}-3.4.5-1": "libnvshmem3-static-cuda-${CUDA_MAJOR}=3.4.5-1"
   },
   "ubuntu_only": [
-    "python${PYTHON_VERSION}-venv",
     "debhelper",
     "libnuma-dev"
   ]
