@@ -29,10 +29,6 @@ This example out of the box requires 2 GPUs of any supported kind:
 
     ```
 
-**_NOTE:_**
-**Kubernetes v1.33.0+** is recommended for complete sidecar init container support (restartPolicy: Always). If using Kubernetes v1.28.x or below, pods may get stuck in Init:0/1 state due to incomplete sidecar support.
-
-
 ## Installation
 
 Use the helmfile to compose and install the stack. The Namespace in which the stack will be deployed will be derived from the `${NAMESPACE}` environment variable. If you have not set this, it will default to `llm-d-inference-scheduler` in this example.
