@@ -282,6 +282,7 @@ jobs:
         id: manifest
         working-directory: /tmp/digests
         run: |
+          SHORT_SHA=$(git rev-parse --short $GITHUB_SHA)
           # build the list of source images (by digest)
           sources=""
           for digest in *; do
@@ -292,12 +293,12 @@ jobs:
           docker buildx imagetools create \
             -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:pr-${{
               github.event.pull_request.number }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:sha-${GITHUB_SHA::7} \
+            -t ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:sha-${SHORT_SHA} \
             $sources
 
           # extract final manifest digest
           MANIFEST_DIGEST=$(docker buildx imagetools inspect \
-            ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:sha-${GITHUB_SHA::7} \
+            ${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }}:sha-${SHORT_SHA} \
             | awk '/^Digest:/ {print $2}')
           echo "digest=${MANIFEST_DIGEST}" >> $GITHUB_OUTPUT
 
