@@ -64,7 +64,8 @@ RUN --mount=type=secret,id=aws_access_key_id \
     rm /tmp/install-sccache.sh
 
 # Install uv and setup Python virtual environment
-RUN UV_INSTALL_DIR=/usr/local/bin curl -LsSf https://astral.sh/uv/install.sh | sh && \
+RUN export UV_INSTALL_DIR=/usr/local/bin && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
     uv venv /opt/vllm --python ${PYTHON_VERSION} && \
     uv pip install --no-cache -U wheel meson-python ninja pybind11 build
 
