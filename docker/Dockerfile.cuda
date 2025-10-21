@@ -297,12 +297,12 @@ RUN --mount=type=cache,target=/var/cache/git \
 
 # Cleanup packages
 COPY docker/scripts/cuda/common/package-utils.sh /tmp/package-utils.sh
-RUN chmod +x /tmp/package-utils.sh && \
+RUN bash -c "chmod +x /tmp/package-utils.sh && \
     # shellcheck source=docker/scripts/cuda/common/package-utils.sh
     . /tmp/package-utils.sh && \
-    autoremove_packages ${TARGETOS} && \
-    cleanup_packages ${TARGETOS} && \
-    rm /tmp/package-utils.sh
+    autoremove_packages \${TARGETOS} && \
+    cleanup_packages \${TARGETOS} && \
+    rm /tmp/package-utils.sh"
 
 # setup non-root user for OpenShift
 RUN umask 002 && \
