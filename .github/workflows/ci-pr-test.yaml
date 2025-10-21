@@ -32,6 +32,34 @@ permissions:
   security-events: write
 
 jobs:
+  # Detect which files have changed to determine which tests to run
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      inference-scheduling: ${{ steps.filter.outputs.inference-scheduling }}
+      pd-disaggregation: ${{ steps.filter.outputs.pd-disaggregation }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            inference-scheduling:
+              - .github/workflows/ci-pr-test.yaml
+              - .github/workflows/e2e-inference-scheduling-xpu.yaml
+              - docker/Dockerfile.xpu
+              - guides/**/values_xpu.yaml
+              - guides/inference-scheduling/ms-inference-scheduling/values_xpu.yaml
+              - guides/inference-scheduling/helmfile.yaml.gotmpl
+            pd-disaggregation:
+              - .github/workflows/ci-pr-test.yaml
+              - .github/workflows/e2e-pd-disaggregation-xpu.yaml
+              - docker/Dockerfile.xpu
+              - guides/**/values_xpu.yaml
+              - guides/pd-disaggregation/ms-pd/values_xpu.yaml
+              - guides/pd-disaggregation/README.xpu.md
+              - guides/pd-disaggregation/helmfile.yaml.gotmpl
+
   # Call the build-image workflow to build any changed images
   build-images:
     uses: ./.github/workflows/build-image.yml
@@ -39,8 +67,8 @@ jobs:
 
   # Call the XPU Inference Scheduling test workflow
   test-xpu-inference-scheduling:
-    needs: build-images
-    if: ${{ !cancelled() }}
+    needs: [detect-changes, build-images]
+    if: ${{ always() && !cancelled() && (github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.inference-scheduling == 'true') }}
     uses: ./.github/workflows/e2e-inference-scheduling-xpu.yaml
     with:
       pr_or_branch: ${{ github.event.inputs.pr_or_branch || github.event.pull_request.number }}
@@ -49,8 +77,8 @@ jobs:
 
   # Call the XPU PD Disaggregation test workflow
   test-xpu-pd-disaggregation:
-    needs: build-images
-    if: ${{ !cancelled() }}
+    needs: [detect-changes, build-images]
+    if: ${{ always() && !cancelled() && (github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.pd-disaggregation == 'true') }}
     uses: ./.github/workflows/e2e-pd-disaggregation-xpu.yaml
     with:
       pr_or_branch: ${{ github.event.inputs.pr_or_branch || github.event.pull_request.number }}
