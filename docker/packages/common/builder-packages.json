@@ -33,10 +33,7 @@
     "pciutils-libs": null,
     "ninja-build": "ninja-build",
     "xz": "xz-utils",
-    "rsync": "rsync",
-    "libnvshmem3-cuda-${CUDA_MAJOR}-3.4.5-1": "libnvshmem3-cuda-${CUDA_MAJOR}=3.4.5-1",
-    "libnvshmem3-devel-cuda-${CUDA_MAJOR}-3.4.5-1": "libnvshmem3-dev-cuda-${CUDA_MAJOR}=3.4.5-1",
-    "libnvshmem3-static-cuda-${CUDA_MAJOR}-3.4.5-1": "libnvshmem3-static-cuda-${CUDA_MAJOR}=3.4.5-1"
+    "rsync": "rsync"
   },
   "ubuntu_only": [
     "debhelper",

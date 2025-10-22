@@ -159,3 +159,52 @@ load_and_expand_packages() {
 
     load_packages_from_json "$os" "$manifest_expanded"
 }
+
+# merge two json package manifests (accelerator overrides common)
+# usage: merge_package_manifests <common_json> <accelerator_json>
+# returns: merged json manifest
+merge_package_manifests() {
+    local common="$1"
+    local accelerator="$2"
+
+    # use jq to deeply merge the two manifests
+    # accelerator packages override common ones with same key
+    jq -s '.[0] * .[1]' <(echo "$common") <(echo "$accelerator")
+}
+
+# load and merge packages from common + accelerator-specific locations
+# usage: load_layered_packages <os> <package_type> <accelerator>
+# package_type: "builder-packages.json" or "runtime-packages.json"
+# accelerator: "cuda", "xpu", "hpu", etc.
+# returns: package names (one per line) for the target os
+load_layered_packages() {
+    local os="$1"
+    local package_type="$2"
+    local accelerator="$3"
+
+    local common_file="/tmp/packages/common/${package_type}"
+    local accelerator_file="/tmp/packages/${accelerator}/${package_type}"
+
+    # check if files exist
+    if [ ! -f "$common_file" ]; then
+        echo "ERROR: Common package file not found: $common_file" >&2
+        exit 1
+    fi
+
+    # load common packages
+    local common_manifest common_expanded
+    common_manifest=$(cat "$common_file")
+    common_expanded=$(expand_vars "$common_manifest")
+
+    # load accelerator packages if they exist
+    local merged_manifest="$common_expanded"
+    if [ -f "$accelerator_file" ]; then
+        local accel_manifest accel_expanded
+        accel_manifest=$(cat "$accelerator_file")
+        accel_expanded=$(expand_vars "$accel_manifest")
+        merged_manifest=$(merge_package_manifests "$common_expanded" "$accel_expanded")
+    fi
+
+    # extract package list for target OS
+    load_packages_from_json "$os" "$merged_manifest"
+}
