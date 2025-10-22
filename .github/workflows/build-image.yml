@@ -283,7 +283,7 @@ jobs:
         id: manifest
         working-directory: /tmp/digests
         run: |
-          SHORT_SHA=$(git rev-parse --short $GITHUB_SHA)
+          SHORT_SHA=${GITHUB_SHA:0:7}
           # build the list of source images (by digest)
           sources=""
           for digest in *; do
