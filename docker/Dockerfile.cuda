@@ -138,7 +138,7 @@ ENV LIBRARY_PATH="/usr/local/cuda/lib64:/usr/local/lib:/usr/local/lib64" \
     CPATH="/usr/include:/usr/local/include:/usr/local/cuda/include" \
     PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig"
 
-ARG NVSHMEM_VERSION=3.3.20
+ARG NVSHMEM_VERSION=3.2.5
 
 # Set NVSHMEM paths for CMake discovery
 ENV NVSHMEM_DIR="/opt/nvshmem-${NVSHMEM_VERSION}" \
@@ -253,7 +253,7 @@ WORKDIR /workspace/vllm
 # note: these libraries don't yet push sdist releases to pypi
 # so down below we do a git clone
 ARG DEEPEP_REPO="https://github.com/deepseek-ai/DeepEP"
-ARG DEEPEP_VERSION="e3908bf5bd0cc6265bcb225d15cd8c996d4759ef"
+ARG DEEPEP_VERSION="73b6ea4a439ba03a695563f9fd242c8e4b02b37c"
 ARG DEEPGEMM_REPO="https://github.com/deepseek-ai/DeepGEMM"
 ARG DEEPGEMM_VERSION="v2.1.0"
 ARG PPLX_KERNELS_REPO="https://github.com/perplexityai/pplx-kernels"
@@ -317,7 +317,7 @@ ARG CUDA_MAJOR=12
 ARG CUDA_MINOR=9
 ARG CUDA_PATCH=1
 ARG PYTHON_VERSION
-ARG NVSHMEM_VERSION=3.3.20
+ARG NVSHMEM_VERSION=3.2.5
 
 RUN cat > /tmp/constraints.txt <<'EOF'
 torch==2.8.0
