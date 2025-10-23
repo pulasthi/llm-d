@@ -127,10 +127,133 @@ jobs:
               "$NAMESPACE"
           done
 
+      - name: Check namespace and initial pod status
+        if: always()
+        run: |
+          echo "=== Checking namespace ==="
+          kubectl get namespace "${NAMESPACE}" || echo "Namespace does not exist!"
+          echo ""
+          echo "=== Checking pods in namespace ==="
+          kubectl get pods -n "${NAMESPACE}" -o wide || echo "No pods found or cannot access namespace"
+          echo ""
+          echo "=== Checking all resources ==="
+          kubectl get all -n "${NAMESPACE}" || echo "Cannot get resources"
+
+      - name: Generate deployment report
+        if: always()
+        id: deployment_report
+        run: |
+          REPORT_FILE="deployment-report.md"
+          echo "# Deployment Report - XPU PD Disaggregation" > $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $REPORT_FILE
+          echo "**Workflow:** ${{ github.workflow }}" >> $REPORT_FILE
+          echo "**Run ID:** ${{ github.run_id }}" >> $REPORT_FILE
+          echo "**Namespace:** ${NAMESPACE}" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          
+          echo "## Image Information" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          CUSTOM_TAG="${{ inputs.custom_image_tag }}"
+          if [ -n "${CUSTOM_TAG}" ]; then
+            echo "- **Custom Image Tag:** ${CUSTOM_TAG}" >> $REPORT_FILE
+            echo "- **Decode Image:** ghcr.io/${{ github.repository }}-xpu-dev:${CUSTOM_TAG}" >> $REPORT_FILE
+            echo "- **Prefill Image:** ghcr.io/${{ github.repository }}-xpu-dev:${CUSTOM_TAG}" >> $REPORT_FILE
+          else
+            echo "- **Image Source:** Default from values file (main)" >> $REPORT_FILE
+            echo "- **Expected Images:** ghcr.io/${{ github.repository }}-xpu-dev:main" >> $REPORT_FILE
+          fi
+          echo "" >> $REPORT_FILE
+          
+          echo "## Deployment Logs" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          if [ -f ~/pd-xpu-deployment.log ]; then
+            echo "<details>" >> $REPORT_FILE
+            echo "<summary>Click to expand helmfile deployment output</summary>" >> $REPORT_FILE
+            echo "" >> $REPORT_FILE
+            echo '```' >> $REPORT_FILE
+            cat ~/pd-xpu-deployment.log >> $REPORT_FILE
+            echo '```' >> $REPORT_FILE
+            echo "</details>" >> $REPORT_FILE
+          else
+            echo "⚠️ Deployment log file not found" >> $REPORT_FILE
+          fi
+          echo "" >> $REPORT_FILE
+          
+          echo "## Helm Releases" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          echo '```' >> $REPORT_FILE
+          helm list -n "${NAMESPACE}" >> $REPORT_FILE 2>&1 || echo "Failed to get helm releases" >> $REPORT_FILE
+          echo '```' >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          
+          echo "## Pod Status" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          POD_COUNT=$(kubectl get pods -n "${NAMESPACE}" --no-headers 2>/dev/null | wc -l)
+          DECODE_COUNT=$(kubectl get pods -n "${NAMESPACE}" -l "llm-d.ai/role=decode" --no-headers 2>/dev/null | wc -l)
+          PREFILL_COUNT=$(kubectl get pods -n "${NAMESPACE}" -l "llm-d.ai/role=prefill" --no-headers 2>/dev/null | wc -l)
+          echo "**Total Pods:** $POD_COUNT (Decode: $DECODE_COUNT, Prefill: $PREFILL_COUNT)" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          if [ "$POD_COUNT" -gt 0 ]; then
+            echo '```' >> $REPORT_FILE
+            kubectl get pods -n "${NAMESPACE}" -o wide >> $REPORT_FILE 2>&1
+            echo '```' >> $REPORT_FILE
+            echo "" >> $REPORT_FILE
+            
+            echo "### Pod Images" >> $REPORT_FILE
+            echo "" >> $REPORT_FILE
+            echo '```' >> $REPORT_FILE
+            kubectl get pods -n "${NAMESPACE}" -o jsonpath='{range .items[*]}{"Pod: "}{.metadata.name}{"\n"}{range .spec.containers[*]}{"  Container: "}{.name}{"\n  Image: "}{.image}{"\n"}{end}{"\n"}{end}' >> $REPORT_FILE 2>&1
+            echo '```' >> $REPORT_FILE
+          else
+            echo "**❌ No pods found - Deployment Failed**" >> $REPORT_FILE
+          fi
+          echo "" >> $REPORT_FILE
+          
+          echo "## Events (Last 20)" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          echo '```' >> $REPORT_FILE
+          kubectl get events -n "${NAMESPACE}" --sort-by='.lastTimestamp' | tail -20 >> $REPORT_FILE 2>&1 || echo "Failed to get events" >> $REPORT_FILE
+          echo '```' >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          
+          if [ "$POD_COUNT" -eq 0 ]; then
+            echo "## Troubleshooting" >> $REPORT_FILE
+            echo "" >> $REPORT_FILE
+            echo "### Possible Issues:" >> $REPORT_FILE
+            echo "1. Helm deployment failed - check helm release status above" >> $REPORT_FILE
+            echo "2. Image pull errors - verify images exist: ghcr.io/${{ github.repository }}-xpu-dev:${CUSTOM_TAG:-main}" >> $REPORT_FILE
+            echo "3. Resource constraints - check node resources" >> $REPORT_FILE
+            echo "4. Configuration errors - check deployment logs above" >> $REPORT_FILE
+            echo "" >> $REPORT_FILE
+            
+            echo "### Helm Release Details" >> $REPORT_FILE
+            echo "" >> $REPORT_FILE
+            for release in "${INFRA_RELEASE_NAME}" "${GAIE_RELEASE_NAME}" "${MS_RELEASE_NAME}"; do
+              echo "#### Release: $release" >> $REPORT_FILE
+              echo '```' >> $REPORT_FILE
+              helm status $release -n "${NAMESPACE}" >> $REPORT_FILE 2>&1 || echo "Release $release not found or failed" >> $REPORT_FILE
+              echo '```' >> $REPORT_FILE
+              echo "" >> $REPORT_FILE
+            done
+          fi
+          
+          cat $REPORT_FILE
+          echo "REPORT_FILE=$REPORT_FILE" >> $GITHUB_OUTPUT
+
       - name: Wait for all pods to be ready
-        continue-on-error: true
         id: wait_pods
         run: |
+          # Check if any pods exist before waiting
+          POD_COUNT=$(kubectl get pods -n "${NAMESPACE}" --no-headers 2>/dev/null | wc -l)
+          if [ "$POD_COUNT" -eq 0 ]; then
+            echo "❌ ERROR: No pods found in namespace ${NAMESPACE}"
+            echo "Deployment has failed. No pods were created."
+            echo "Check the deployment logs and helm releases above for errors."
+            exit 1
+          fi
+          
+          echo "Found $POD_COUNT pods. Waiting for them to be ready..."
           kubectl wait pod \
             --for=condition=Ready \
             --all \
@@ -223,6 +346,13 @@ jobs:
         with:
           name: llmd-pod-logs-pd-xpu
           path: pod-logs-pd-xpu
+
+      - name: Upload deployment report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployment-report-pd-xpu
+          path: deployment-report.md
 
       - name: Cleanup deployment
         if: always()
