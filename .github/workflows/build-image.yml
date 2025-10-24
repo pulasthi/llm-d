@@ -133,18 +133,22 @@ jobs:
             runner: vllm-runner
             os: rhel
             base_image_suffix: ubi9
+            image_suffix: ""
           - platform: linux/arm64
             runner: vllm-runner-arm
             os: rhel
             base_image_suffix: ubi9
+            image_suffix: ""
           - platform: linux/amd64
             runner: vllm-runner
             os: ubuntu
             base_image_suffix: ubuntu24.04
+            image_suffix: "-ubuntu"
           - platform: linux/arm64
             runner: vllm-runner-arm
             os: ubuntu
             base_image_suffix: ubuntu24.04
+            image_suffix: "-ubuntu"
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout code
@@ -195,7 +199,7 @@ jobs:
             matrix.platform == 'linux/arm64' && 'arm64' || 'amd64' }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: >-
-            type=image,name=${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev,
+            type=image,name=${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }},
             push-by-digest=true,name-canonical=true,push=true
           github-token: ${{ secrets.GHCR_TOKEN }}
           secrets: |
