@@ -9,7 +9,6 @@ on:
       - docker/Dockerfile.xpu
       - guides/**/values_xpu.yaml
       - guides/pd-disaggregation/ms-pd/values_xpu.yaml
-      - guides/pd-disaggregation/README.xpu.md
       - guides/pd-disaggregation/helmfile.yaml.gotmpl
       - guides/inference-scheduling/ms-inference-scheduling/values_xpu.yaml
       - guides/inference-scheduling/helmfile.yaml.gotmpl
