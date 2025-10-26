@@ -9,6 +9,10 @@
     "procps-ng": "procps",
     "git": "git",
     "curl": "curl",
-    "gcc": "gcc"
-  }
+    "gcc": "gcc",
+    "hwloc-libs": "libhwloc15"
+  },
+  "ubuntu_only": [
+    "hwloc"
+  ]
 }
