@@ -289,8 +289,7 @@ jobs:
           done
 
           # build tag list
-          tags=""
-          tags="$tags -t ${IMAGE_BASE}:sha-${SHORT_SHA}"
+          tags="-t ${IMAGE_BASE}:sha-${SHORT_SHA}"
 
           # add PR tag if this is a pull request
           if [ -n "${{ github.event.pull_request.number }}" ]; then
