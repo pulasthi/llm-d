@@ -91,7 +91,11 @@ fi
 echo "DEBUG: Installing packages: ${INSTALL_PACKAGES[*]}"
 
 # install all packages in one command with verbose output to prevent GHA timeouts
-uv pip install -v "${INSTALL_PACKAGES[@]}"
+uv pip install -v "${INSTALL_PACKAGES[@]}" \
+  --prerelease allow --torch-backend cu129 \
+  --extra-index-url https://wheels.vllm.ai/nightly \
+  --extra-index-url https://download.pytorch.org/whl/cu129 \
+  --index-strategy unsafe-best-match
 
 # cleanup
 rm -rf /tmp/wheels
