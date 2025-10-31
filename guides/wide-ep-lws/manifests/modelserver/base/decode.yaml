@@ -9,7 +9,7 @@ metadata:
 spec:
   replicas: 1
   leaderWorkerTemplate:
-    size: 4
+    size: 2
     workerTemplate:
       metadata:
         labels:
@@ -42,7 +42,7 @@ spec:
               sizeLimit: 3Gi # roughly 32MB per local DP plus scratch space
         containers:
         - name: vllm-worker
-          image: "quay.io/tms/llm-d-dev:nightly-0384aa7150c4c9778efca041ffd1beb3ad2bd694"
+          image: "quay.io/tms/llm-d-dev:nightly-f29aeb5a25dad044306684e205adc159949c6ccb"
           securityContext:
             capabilities:
               add:
@@ -61,7 +61,7 @@ spec:
               find /dev/shm -type f -delete
 
 
-              sleep infinity
+              uv pip uninstall nvidia-nvshmem-cu12
 
               #################
               # RUN vLLM decode worker
