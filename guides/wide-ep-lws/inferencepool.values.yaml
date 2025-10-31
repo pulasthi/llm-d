@@ -28,10 +28,6 @@ inferenceExtension:
       - type: random-picker
         parameters:
           maxNumOfEndpoints: 1
-      - type: pd-profile-handler
-        parameters:
-          threshold: 0
-          hashBlockSize: 5
       schedulingProfiles:
       - name: default
         plugins:
