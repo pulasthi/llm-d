@@ -1,8 +1,8 @@
 ARG ONEAPI_VERSION=2025.1.3-0
-ARG VLLM_VERSION=v0.11.0
 
 FROM intel/deep-learning-essentials:${ONEAPI_VERSION}-devel-ubuntu24.04 AS vllm-base
 
+ARG VLLM_VERSION=v0.11.0
 ARG CACHE_BUSTER
 RUN if [ -n "${CACHE_BUSTER}" ]; then \
         echo "$CACHE_BUSTER" > /tmp/builder-buster; \
