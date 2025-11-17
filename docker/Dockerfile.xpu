@@ -79,7 +79,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 RUN python3 -m pip install -e tests/vllm_test_utils
 
 # install nixl from source code using our latest version
-COPY ./scripts/install_nixl_from_source_ubuntu.py /tmp/install_nixl_from_source_ubuntu.py
+COPY docker/scripts/install_nixl_from_source_ubuntu.py /tmp/install_nixl_from_source_ubuntu.py
 RUN python3 /tmp/install_nixl_from_source_ubuntu.py
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/python3.12/dist-packages/.nixl.mesonpy.libs/plugins/"
 
