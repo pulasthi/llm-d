@@ -63,7 +63,7 @@ spec:
 
                 source /opt/vllm/bin/activate
                 exec vllm serve \
-                  deepseek-ai/DeepSeek-R1-0528 \
+                  deepseek-ai/DeepSeek-V3.1 \
                   --port 8200 \
                   --disable-uvicorn-access-log \
                   --enable-expert-parallel \
