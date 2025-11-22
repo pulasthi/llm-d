@@ -404,7 +404,7 @@ jobs:
     if: ${{ needs.detect-changes.outputs.xpu == 'true' }}
     strategy:
       fail-fast: false
-    runs-on: xpu
+    runs-on: vllm-runner
     steps:
       - name: Checkout push ref
         if: github.event_name == 'push'
