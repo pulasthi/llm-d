@@ -41,7 +41,7 @@ CMD ["bash", "-c", "source /root/.bashrc && exec bash"]
 
 # Clone vLLM and build for XPU
 WORKDIR /workspace
-ARG VLLM_VERSION=v0.11.1rc4
+ARG VLLM_VERSION=460d02a417b440ce8b3b8d09c6f5214a2a346426
 RUN --mount=type=cache,target=/var/cache/git \
     git clone https://github.com/vllm-project/vllm.git && \
     cd vllm && \
