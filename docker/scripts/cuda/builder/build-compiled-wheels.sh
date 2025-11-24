@@ -37,12 +37,18 @@ cd flashinfer
 git checkout -q "${FLASHINFER_VERSION}"
 git submodule update --init --recursive
 uv build --wheel --no-build-isolation --out-dir /wheels
-cd flashinfer-cubin &&
-  FLASHINFER_LOGGING_LEVEL=WARNING uv build --wheel --no-build-isolation --out-dir /wheels
-cd ../flashinfer-jit-cache &&
-  FLASHINFER_CUDA_ARCH_LIST="9.0a 10.0a" uv build --wheel --no-build-isolation --out-dir /wheels
-cd ../../ &&
-  rm -rf flashinfer
+
+# download pre-built flashinfer-cubin and flashinfer-jit-cache wheels
+# building from source times out due to compiling hundreds of kernel variants for multiple arches
+FLASHINFER_WHEEL_VERSION="${FLASHINFER_VERSION#v}"
+CUDA_SHORT_VERSION="${CUDA_MAJOR}$(echo "${CUDA_VERSION}" | cut -d. -f2)"
+uv pip download --dest /wheels \
+  flashinfer-cubin=="${FLASHINFER_WHEEL_VERSION}" \
+  flashinfer-jit-cache=="${FLASHINFER_WHEEL_VERSION}" \
+  --extra-index-url "https://flashinfer.ai/whl/cu${CUDA_SHORT_VERSION}"
+
+cd ..
+rm -rf flashinfer
 
 # build DeepEP wheel
 git clone "${DEEPEP_REPO}" deepep
