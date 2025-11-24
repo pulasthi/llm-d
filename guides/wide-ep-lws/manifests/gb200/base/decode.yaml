@@ -128,12 +128,12 @@ spec:
               limits:
                 ephemeral-storage: 64Gi
                 memory: 512Gi
-                nvidia.com/gpu: "8"
+                nvidia.com/gpu: "4"
               requests:
                 cpu: 32
                 ephemeral-storage: 64Gi
                 memory: 512Gi
-                nvidia.com/gpu: "8"
+                nvidia.com/gpu: "4"
             volumeMounts:
               - mountPath: /dev/shm
                 name: dshm
