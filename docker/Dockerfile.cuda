@@ -172,7 +172,7 @@ ARG DEEPGEMM_VERSION="v2.1.0"
 ARG PPLX_KERNELS_REPO="https://github.com/perplexityai/pplx-kernels"
 ARG PPLX_KERNELS_SHA="12cecfda252e4e646417ac263d96e994d476ee5d"
 
-ARG FLASHINFER_VERSION="v0.3.1"
+ARG FLASHINFER_VERSION="v0.5.2"
 
 # Build compiled packages as wheels (only ones that need build tools)
 COPY docker/scripts/cuda/builder/build-compiled-wheels.sh /tmp/build-compiled-wheels.sh
