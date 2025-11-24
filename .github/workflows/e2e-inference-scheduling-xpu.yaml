@@ -189,6 +189,23 @@ jobs:
           kubectl get destinationrule -n "${NAMESPACE}" || true
           echo ""
 
+      - name: Verify backend connectivity before tests
+        if: steps.wait_pods.outcome == 'success'
+        run: |
+          echo "=== Testing direct backend pod connectivity ==="
+          DECODE_PODS=$(kubectl get pods -n "${NAMESPACE}" -l llm-d.ai/role=decode -o jsonpath='{.items[*].metadata.name}')
+          for pod in $DECODE_PODS; do
+            echo "Testing pod: $pod"
+            kubectl exec -n "${NAMESPACE}" "$pod" -- curl -sS --max-time 5 http://localhost:8200/v1/models || echo "Failed to connect to $pod"
+          done
+          
+          echo ""
+          echo "=== Testing gateway endpoint from within cluster ==="
+          GATEWAY_HOST=$(kubectl get gateway -n "${NAMESPACE}" -o jsonpath='{.items[0].status.addresses[0].value}')
+          echo "Gateway host: ${GATEWAY_HOST}"
+          kubectl run --rm -i curl-test-gateway --namespace "${NAMESPACE}" --image=curlimages/curl --restart=Never -- \
+            curl -v --max-time 30 "http://${GATEWAY_HOST}:80/v1/models" || echo "Gateway connectivity test failed"
+
       - name: Verify installation and run inference tests
         if: steps.wait_pods.outcome == 'success'
         run: |

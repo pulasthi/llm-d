@@ -61,17 +61,41 @@ else
   echo "Attempting to auto-discover model ID from ${SVC_HOST}/v1/models..."
   ID=$(gen_id)
   ret=0
+  
+  # First, verify the gateway endpoint is reachable
+  echo "Testing gateway connectivity..."
+  kubectl run --pod-running-timeout 5m --rm -i curl-test-${ID} \
+                --namespace "$NAMESPACE" \
+                --image=curlimages/curl --restart=Never -- \
+                curl -v --max-time 30 "http://${SVC_HOST}/v1/models" 2>&1 | tee /tmp/gateway-test-${ID}.log || true
+  
+  echo ""
+  echo "Attempting to parse model ID from response..."
   MODEL_ID=$(kubectl run --pod-running-timeout 5m --rm -i curl-discover-${ID} \
                 --namespace "$NAMESPACE" \
                 --image=curlimages/curl --restart=Never -- \
-                curl -sS --max-time 15 "http://${SVC_HOST}/v1/models" | \
+                curl -sS --max-time 60 "http://${SVC_HOST}/v1/models" 2>&1 | \
+                tee /tmp/models-response-${ID}.log | \
                 grep -o '"id":"[^"]*"' | \
                 head -n 1 | \
                 cut -d '"' -f 4) || ret=$?
 
   if [[ $ret -ne 0 || -z "$MODEL_ID" ]]; then
     echo "Error: Failed to auto-discover model ID from gateway (exit code $ret)." >&2
+    echo "Response logs saved to /tmp/models-response-${ID}.log and /tmp/gateway-test-${ID}.log" >&2
     echo "You can specify one using the -m flag or the MODEL_ID environment variable." >&2
+    
+    # Show additional debugging info
+    echo "" >&2
+    echo "=== Gateway Status ===" >&2
+    kubectl get gateway -n "$NAMESPACE" -o yaml || true >&2
+    echo "" >&2
+    echo "=== HTTPRoute Status ===" >&2
+    kubectl get httproutes -n "$NAMESPACE" -o yaml || true >&2
+    echo "" >&2
+    echo "=== Backend Pod Status ===" >&2
+    kubectl get pods -n "$NAMESPACE" -l llm-d.ai/role=decode || true >&2
+    
     exit 1
   fi
 fi
