@@ -25,6 +25,15 @@ INSTALL_PACKAGES=(
   /tmp/wheels/*.whl
 )
 
+# install flashinfer pre-built cubin and jit-cache
+# cubin is on PyPI, jit-cache uses flashinfer wheel index
+# building these from source times out due to compiling hundreds of kernel variants for multiple arches
+FLASHINFER_WHEEL_VERSION="${FLASHINFER_VERSION#v}"
+CUDA_SHORT_VERSION="cu${CUDA_MAJOR}${CUDA_MINOR}"
+uv pip install flashinfer-cubin=="${FLASHINFER_WHEEL_VERSION}"
+uv pip install flashinfer-jit-cache=="${FLASHINFER_WHEEL_VERSION}" \
+  --index-url "https://flashinfer.ai/whl/${CUDA_SHORT_VERSION}"
+
 # clone vllm repository
 git clone "${VLLM_REPO}" /opt/vllm-source
 git -C /opt/vllm-source config --system --add safe.directory /opt/vllm-source
