@@ -52,5 +52,4 @@ kubectl create -f https://vault.habana.ai/artifactory/docker-k8s-device-plugin/h
 ```
 
 This plugin enables Kubernetes to discover and schedule workloads on Intel Gaudi. Make sure to install this before deploying any HPU-based inference workloads.
-~
 
