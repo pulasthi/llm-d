@@ -74,10 +74,6 @@ spec:
                   --data-parallel-rpc-port 5555 \
                   --data-parallel-start-rank $START_RANK \
                   --trust-remote-code \
-                  --max-model-len 4096 \
-                  --gpu-memory-utilization 0.75 \
-                  --max-num-batched-tokens 2048 \
-                  --max-num-seqs 2048 \
                   --kv_transfer_config '{"kv_connector":"NixlConnector","kv_role":"kv_both"}'
             env:
               - name: VLLM_DEEPEP_LOW_LATENCY_ALLOW_NVLINK
