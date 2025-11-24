@@ -48,7 +48,7 @@ RUN \
     \
     # Install vllm-gaudi
     cd $VLLM_PATH2 && \
-    VLLM_TARGET_DEVICE=hpu pip install -v . --no-build-isolation && \
+    VLLM_TARGET_DEVICE=hpu pip install -v . && \
     python install_nixl.py
 # --- END: COMBINED RUN COMMAND ---
 
