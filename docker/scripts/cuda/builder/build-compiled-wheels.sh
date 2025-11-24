@@ -37,6 +37,7 @@ cd flashinfer
 git checkout -q "${FLASHINFER_VERSION}"
 git submodule update --init --recursive
 uv build --wheel --no-build-isolation --out-dir /wheels
+uv pip install apache-tvm-ffi
 cd flashinfer-cubin && \
 uv build --wheel --no-build-isolation --out-dir /wheels
 cd ../flashinfer-jit-cache && \
