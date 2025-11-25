@@ -5,7 +5,7 @@ multinode: false
 
 # Configure accelerator type for Intel XPU
 accelerator:
-  type: intel
+  type: "intel-i915"
 
 modelArtifacts:
   uri: "hf://Qwen/Qwen3-0.6B"
