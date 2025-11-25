@@ -141,8 +141,8 @@ WORKDIR /workspace
 # Define commit SHAs as build args to avoid layer invalidation
 ARG LMCACHE_REPO=https://github.com/neuralmagic/LMCache.git
 ARG LMCACHE_COMMIT_SHA="0db8ae4746a207a72483d716b5f82545a2ead24b"
-ARG VLLM_REPO="https://github.com/wseaton/vllm.git"
-ARG VLLM_COMMIT_SHA="ec5781b4515637f5baaaffaadd812d2fce4766a8"
+ARG VLLM_REPO="https://github.com/neuralmagic/vllm.git"
+ARG VLLM_COMMIT_SHA="llm-d-release-0.4"
 
 # Build LMCache wheel (skip on ARM64 - infinistore dependency has no ARM wheels)
 # hadolint ignore=DL3003,SC1091
@@ -283,8 +283,8 @@ RUN mkdir -p /opt/vllm-source && \
 
 # Define commit SHAs as build args to avoid layer invalidation
 ARG LMCACHE_COMMIT_SHA="0db8ae4746a207a72483d716b5f82545a2ead24b"
-ARG VLLM_REPO="https://github.com/wseaton/vllm.git"
-ARG VLLM_COMMIT_SHA="ec5781b4515637f5baaaffaadd812d2fce4766a8"
+ARG VLLM_REPO="https://github.com/neuralmagic/vllm.git"
+ARG VLLM_COMMIT_SHA="llm-d-release-0.4"
 # vllm commit to use for precompiled wheel lookup (defaults to VLLM_COMMIT_SHA)
 # useful for testing feature branches with python-only changes against merge-base binaries
 ARG VLLM_PRECOMPILED_WHEEL_COMMIT="75648b16ddce1bff02c39c6f06be62a58385ff52"
