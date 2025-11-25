@@ -288,16 +288,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     # Build FlashInfer wheel
     cd /tmp && \
     # Remove if already installed to prevent versioning issues
+    
     uv pip uninstall flashinfer-python || true && \
     git clone https://github.com/flashinfer-ai/flashinfer.git && \
     cd flashinfer && \
-    uv pip install -e . --no-build-isolation && \
+    git submodule update --init --recursive && \
     uv build --wheel --no-build-isolation --out-dir /wheels && \
     cd flashinfer-cubin && \
-    uv pip install -e . --no-build-isolation && \
+    uv build --wheel --no-build-isolation --out-dir /wheels && \
     cd ../flashinfer-jit-cache && \
-    FLASHINFER_CUDA_ARCH_LIST="9.0a 10.0a" uv build --wheel --no-build-isolation --out-dir /wheel && \
-    cd ../.. && rm -rf flashinfer && \
+    FLASHINFER_CUDA_ARCH_LIST="9.0a 10.0a" uv build --wheel --no-build-isolation --out-dir /wheels && \
+    cd ../../ && rm -rf flashinfer  && \
     \
     # Build DeepEP wheel
     git clone "${DEEPEP_URL}" deepep && \
