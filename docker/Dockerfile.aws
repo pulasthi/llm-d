@@ -294,9 +294,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -e . --no-build-isolation && \
     uv build --wheel --no-build-isolation --out-dir /wheels && \
     cd flashinfer-cubin && \
-    uv pip install -e . --no-build-isolation --out-dir /wheel && \
+    uv pip install -e . --no-build-isolation && \
     cd ../flashinfer-jit-cache && \
-    FLASHINFER_CUDA_ARCH_LIST="9.0a 10.0a" uv pip install -e . --no-build-isolation --out-dir /wheel && \
+    FLASHINFER_CUDA_ARCH_LIST="9.0a 10.0a" uv build --wheel --no-build-isolation --out-dir /wheel && \
     cd ../.. && rm -rf flashinfer && \
     \
     # Build DeepEP wheel
