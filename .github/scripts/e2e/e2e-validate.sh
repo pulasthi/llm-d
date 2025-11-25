@@ -112,12 +112,7 @@ CMD
             sh -c "sleep 1; curl -sS -X POST 'http://${SVC_HOST}/v1/chat/completions' \
                  -H 'accept: application/json' \
                  -H 'Content-Type: application/json' \
-                 -d '$chat_payload'" 2>&1 | \
-            grep -v "^pod \"curl-" | \
-            grep -v "^All commands and output" | \
-            grep -v "^If you don't see a command prompt" | \
-            grep -v "^Session ended" | \
-            grep '^\'*{' | head -n 1) || ret=$?
+                 -d '$chat_payload'") || ret=$?
   echo "$output"
   [[ $ret -ne 0 || "$output" != *'{'* ]] && {
     echo "Error: POST /v1/chat/completions failed (exit $ret or no JSON)" >&2; failed=true; }
@@ -146,12 +141,7 @@ CMD
             sh -c "sleep 1; curl -sS -X POST 'http://${SVC_HOST}/v1/completions' \
                  -H 'accept: application/json' \
                  -H 'Content-Type: application/json' \
-                 -d '$payload'" 2>&1 | \
-            grep -v "^pod \"curl-" | \
-            grep -v "^All commands and output" | \
-            grep -v "^If you don't see a command prompt" | \
-            grep -v "^Session ended" | \
-            grep '^\'*{' | head -n 1) || ret=$?
+                 -d '$payload'") || ret=$?
   echo "$output"
   [[ $ret -ne 0 || "$output" != *'{'* ]] && {
     echo "Error: POST /v1/completions failed (exit $ret or no JSON)" >&2; failed=true; }
