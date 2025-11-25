@@ -72,8 +72,8 @@ else
   if [[ $ret -ne 0 || -z "$MODEL_ID" ]]; then
     echo "Error: Failed to auto-discover model ID from gateway (exit code $ret)." >&2
     echo "You can specify one using the -m flag or the MODEL_ID environment variable." >&2
-    exit 1
-  fi
+  exit 1
+fi
 fi
 
 echo "Namespace: $NAMESPACE"
@@ -117,7 +117,7 @@ CMD
             grep -v "^All commands and output" | \
             grep -v "^If you don't see a command prompt" | \
             grep -v "^Session ended" | \
-            grep '^\s*{' | head -n 1) || ret=$?
+            grep '^\'*{' | head -n 1) || ret=$?
   echo "$output"
   [[ $ret -ne 0 || "$output" != *'{'* ]] && {
     echo "Error: POST /v1/chat/completions failed (exit $ret or no JSON)" >&2; failed=true; }
@@ -151,7 +151,7 @@ CMD
             grep -v "^All commands and output" | \
             grep -v "^If you don't see a command prompt" | \
             grep -v "^Session ended" | \
-            grep '^\s*{' | head -n 1) || ret=$?
+            grep '^\'*{' | head -n 1) || ret=$?
   echo "$output"
   [[ $ret -ne 0 || "$output" != *'{'* ]] && {
     echo "Error: POST /v1/completions failed (exit $ret or no JSON)" >&2; failed=true; }
