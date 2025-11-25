@@ -33,10 +33,9 @@ jobs:
     env:
       NAMESPACE: "llm-d-xpu-is"
       GATEWAY_TYPE: "istio"
-      RELEASE_NAME_POSTFIX: "r1"
-      INFRA_RELEASE_NAME: "infra-r1"
-      GAIE_RELEASE_NAME: "gaie-r1"
-      MS_RELEASE_NAME: "ms-r1"
+      INFRA_RELEASE_NAME: "infra-inference-scheduling"
+      GAIE_RELEASE_NAME: "gaie-inference-scheduling"
+      MS_RELEASE_NAME: "ms-inference-scheduling"
 
     steps:
       - name: Checkout
@@ -112,10 +111,17 @@ jobs:
       - name: Deploy guide
         run: |
           cd guides/inference-scheduling
-          RELEASE_NAME_POSTFIX=${RELEASE_NAME_POSTFIX} \
           helmfile apply -e xpu -n "${NAMESPACE}" ${HELM_SET_IMAGE} \
             --skip-schema-validation \
             | tee ~/inference-scheduling-deployment.log
+          echo "---------------------------------------" >> ~/inference-scheduling-xpu-deployment.log
+
+      - name: Deploy HTTPRoute
+        run: |
+          cd guides/inference-scheduling
+          echo "Deploying HTTPRoute..."
+          kubectl apply -f httproute.yaml -n "${NAMESPACE}" \
+            | tee -a ~/inference-scheduling-xpu-deployment.log
           echo "---------------------------------------" >> ~/inference-scheduling-xpu-deployment.log
 
       - name: fetch helm manifests - prepare for upload
