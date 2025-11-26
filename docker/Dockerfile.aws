@@ -283,7 +283,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     source ${VIRTUAL_ENV}/bin/activate && \
     \
     # Install build tools
-    uv pip install build cuda-python numpy setuptools-scm ninja "nvshmem4py-cu${CUDA_MAJOR}" && \
+    uv pip install build cuda-python numpy setuptools-scm ninja "nvshmem4py-cu${CUDA_MAJOR}" tvm_ffi && \
     \
     # Build FlashInfer wheel
     cd /tmp && \
