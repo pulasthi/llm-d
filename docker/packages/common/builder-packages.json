@@ -38,7 +38,8 @@
     "pciutils-libs": null,
     "ninja-build": "ninja-build",
     "xz": "xz-utils",
-    "rsync": "rsync"
+    "rsync": "rsync",
+    "libaio-devel": "libaio-dev"
   },
   "ubuntu_only": [
     "debhelper",

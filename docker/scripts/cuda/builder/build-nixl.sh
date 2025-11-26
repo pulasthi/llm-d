@@ -50,6 +50,9 @@ ninja install
 cd ..
 . ${VIRTUAL_ENV}/bin/activate
 python -m build --no-isolation --wheel -o /wheels
+
+cp build/src/bindings/python/nixl-meta/nixl-*-py3-none-any.whl /wheels/
+
 rm -rf build
 
 cd /tmp && rm -rf /tmp/nixl 
