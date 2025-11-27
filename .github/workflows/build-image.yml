@@ -106,7 +106,6 @@ jobs:
               - 'docker/scripts/**'
             hpu:
               - 'docker/Dockerfile.hpu'
-              - 'docker/scripts/**'
             aws:
               - 'docker/Dockerfile.aws'
               - 'docker/scripts/**'
