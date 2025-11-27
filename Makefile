@@ -7,6 +7,8 @@ ifeq ($(DEVICE), xpu)
 	DOCKERFILE ?= Dockerfile.xpu
 else ifeq ($(DEVICE), cpu)
 	DOCKERFILE ?= Dockerfile.cpu
+else ifeq ($(DEVICE), hpu)
+	DOCKERFILE ?= Dockerfile.hpu
 else ifeq ($(DEVICE), cuda-efa)
 	DOCKERFILE ?= Dockerfile.aws
 else
@@ -17,7 +19,7 @@ VERSION ?= v0.2.1
 # New tag to use if you would like to use `make image-retag`
 NEW_TAG ?= sha256...
 
-# DEVICE, options: ['cuda', 'xpu', 'cpu','cuda-efa']
+# DEVICE, options: ['cuda', 'xpu', 'cpu', 'hpu', 'cuda-efa']
 DEVICE ?= cuda
 
 IMAGE_BASE ?= ghcr.io/llm-d/$(PROJECT_NAME)-$(DEVICE)
