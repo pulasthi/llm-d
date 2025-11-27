@@ -519,7 +519,7 @@ jobs:
           make image-build
           make image-push
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          if [ -n ${PR_TAG} ]; then
+          if [ -n "${PR_TAG}" ]; then
             export NEW_TAG="pr-${PR_TAG}"
             make image-retag
             VERSION="${NEW_TAG}" make image-push
