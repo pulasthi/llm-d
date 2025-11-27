@@ -493,7 +493,7 @@ jobs:
     steps:
       - name: Checkout push ref
         if: github.event_name == 'push'
-        uses: Actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Checkout PR branch
         if: github.event_name == 'pull_request'
