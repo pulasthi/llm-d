@@ -77,7 +77,7 @@ helmfile apply -e hpu -n ${NAMESPACE}
 ```
 **Resource Requirements by GPU Type:**
  * **Intel Gaudi2**: Use `habana.ai/gaudi`
- * **Enable Gaudi2**: Use kubectl create -f https://vault.habana.ai/artifactory/docker-k8s-device-plugin/habana-k8s-device-plugin.yaml 
+ * For HPU prerequisites and setup instructions, see [docs/accelerators/README.md](../../docs/accelerators/README.md).
 
 
 **_NOTE:_** You can set the `$RELEASE_NAME_POSTFIX` env variable to change the release names. This is how we support concurrent installs. Ex: `RELEASE_NAME_POSTFIX=pd-2 helmfile apply -n ${NAMESPACE}`
