@@ -39,7 +39,7 @@ decode:
       interval: "30s"
   containers:
   - name: vllm
-    image: docker.io/library/vllm-gaudi-for-llmd:latest
+    image: "opea/vllm-gaudi:1.22.0"
     imagePullPolicy: IfNotPresent
     securityContext:
       privileged: true
