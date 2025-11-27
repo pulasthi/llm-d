@@ -1,8 +1,8 @@
 multinode: false
 
 # Configure accelerator type for Intel HPU
-accelerator:
-  type: intel-gaudi
+#accelerator:
+#  type: intel-gaudi
 
 # Use DRA instead of device plugins
 dra:
