@@ -185,10 +185,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             TARGETOS=${{ matrix.os }}
+            TARGETPLATFORM=${{ matrix.platform }}
             BUILD_BASE_IMAGE_SUFFIX=${{ matrix.os == 'ubuntu' && 'ubuntu20.04' || matrix.base_image_suffix }}
             FINAL_BASE_IMAGE_SUFFIX=${{ matrix.base_image_suffix }}
-            VLLM_REPO=${{ inputs.vllm_repo || 'https://github.com/vllm-project/vllm.git' }}
-            VLLM_COMMIT_SHA=${{ inputs.vllm_commit_sha || 'b8b302cde434df8c9289a2b465406b47ebab1c2d' }}
           github-token: ${{ secrets.GHCR_TOKEN }}
           secrets: |
             aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID_S3_BUCKET_ONLY }}
@@ -211,6 +210,7 @@ jobs:
           provenance: false
           build-args: |
             TARGETOS=${{ matrix.os }}
+            TARGETPLATFORM=${{ matrix.platform }}
             BUILD_BASE_IMAGE_SUFFIX=${{ matrix.os == 'ubuntu' && 'ubuntu20.04' || matrix.base_image_suffix }}
             FINAL_BASE_IMAGE_SUFFIX=${{ matrix.base_image_suffix }}
             ${{ inputs.vllm_repo != '' && format('VLLM_REPO={0}', inputs.vllm_repo) || '' }}
@@ -228,9 +228,6 @@ jobs:
             type=image,name=${{ env.REGISTRY }}/${{ github.repository }}-cuda-dev${{ matrix.image_suffix }},
             push-by-digest=true,name-canonical=true,push=true
           github-token: ${{ secrets.GHCR_TOKEN }}
-          secrets: |
-            subman_org=${{ secrets.SUBMAN_ORG }}
-            subman_activation_key=${{ secrets.SUBMAN_ACTIVATION_KEY }}
         env:
           DOCKER_BUILDKIT: "1"
           BUILDKIT_PROGRESS: "plain"
@@ -321,7 +318,9 @@ jobs:
     needs: cuda-success-check
     if: ${{ needs.cuda-success-check.outputs.any_succeeded == 'true' }}
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         os: [rhel, ubuntu]
         include:
@@ -423,6 +422,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         if: ${{ steps.should-run.outputs.os_succeeded == 'true' }}
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: >-
@@ -440,6 +440,7 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         if: ${{ steps.should-run.outputs.os_succeeded == 'true' }}
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'

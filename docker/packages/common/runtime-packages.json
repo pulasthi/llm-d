@@ -9,11 +9,12 @@
     "procps-ng": "procps",
     "git": "git",
     "curl": "curl",
-    "gcc": "gcc",
-    "hwloc-libs": "libhwloc15",
-    "libatomic": "libatomic1"
+    "libatomic": "libatomic1",
+    "libaio": null
   },
   "ubuntu_only": [
-    "hwloc"
+    "gcc",
+    "hwloc",
+    "libhwloc15"
   ]
 }
