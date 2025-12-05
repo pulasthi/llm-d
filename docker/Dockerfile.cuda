@@ -120,6 +120,7 @@ RUN --mount=type=cache,target=/var/cache/git \
     NVSHMEM_CUDA_ARCHITECTURES="${NVSHMEM_CUDA_ARCHITECTURES}" /tmp/build-nvshmem.sh && \
     rm /tmp/build-nvshmem.sh
 
+
 # Pin torch, so all deps are built against the same version
 # as vllm itself
 # hadolint ignore=SC1091
@@ -167,7 +168,7 @@ WORKDIR /workspace/vllm
 # set kernel library dependencies
 # note: these libraries don't yet push sdist releases to pypi
 # so down below we do a git clone
-ARG DEEPEP_REPO="https://github.com/smarterclayton/DeepEP"
+ARG DEEPEP_REPO="https://github.com/elvircrn/DeepEP"
 ARG DEEPEP_VERSION="nic_pe_alignment"
 ARG DEEPGEMM_REPO="https://github.com/deepseek-ai/DeepGEMM"
 ARG DEEPGEMM_VERSION="v2.1.0"
