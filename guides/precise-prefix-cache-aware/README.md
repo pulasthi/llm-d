@@ -15,15 +15,55 @@ This guide demonstrates how to configure the inference scheduler to use the new 
 
 Use the helmfile to compose and install the stack. The Namespace in which the stack will be deployed will be derived from the `${NAMESPACE}` environment variable. If you have not set this, it will default to `llm-d-precise` in this example.
 
+### Prepare Installation Namespace
+
 ```bash
-export NAMESPACE=llm-d-precise # Or any namespace your heart desires
+# Create installation namespace and HF token
+export NAMESPACE=llm-d-precise # or any other namespace (shorter names recommended)
 kubectl create namespace ${NAMESPACE}
+kubectl create secret generic llm-d-hf-token --from-literal=HF_TOKEN=${HF_TOKEN} -n ${NAMESPACE}
+```
 
-# Clone the repo and switch to the latest release tag 
-tag=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
-git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout "$tag"
+### Checkout the repo
 
+<!-- TABS:START -->
+
+<!-- TAB:Choose the Latest Release  -->
+**Choose the Latest Release**
+
+```
+branch=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
 cd guides/precise-prefix-cache-aware
+```
+
+<!-- TAB:Choose Main -->
+**Choose Main Branch**
+
+```
+branch="main"
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/precise-prefix-cache-aware
+```
+
+<!-- TAB:Choose Commit -->
+**Choose a Commit**
+
+```
+branch=<commit_sha>
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/precise-prefix-cache-aware
+```
+
+<!-- TABS:END -->
+
+
+### Deploy
+
+```bash
 helmfile apply -n ${NAMESPACE}
 ```
 

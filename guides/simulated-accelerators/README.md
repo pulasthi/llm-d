@@ -18,15 +18,54 @@ This guide demonstrates how to deploy the simulator `ghcr.io/llm-d/llm-d-inferen
 
 Use the helmfile to compose and install the stack. The Namespace in which the stack will be deployed will be derived from the `${NAMESPACE}` environment variable. If you have not set this, it will default to `llm-d-sim` in this example.
 
+### Prepare Installation Namespace
+
 ```bash
-export NAMESPACE=llm-d-sim # Or any namespace your heart desires
+# Create installation namespace
+export NAMESPACE=llm-d-sim # or any other namespace (shorter names recommended)
 kubectl create namespace ${NAMESPACE}
+```
 
-# Clone the repo and switch to the latest release tag 
-tag=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
-git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout "$tag"
+### Checkout the repo
 
+<!-- TABS:START -->
+
+<!-- TAB:Choose the Latest Release  -->
+**Choose the Latest Release**
+
+```
+branch=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
 cd guides/simulated-accelerators
+```
+
+<!-- TAB:Choose Main -->
+**Choose Main Branch**
+
+```
+branch="main"
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/simulated-accelerators
+```
+
+<!-- TAB:Choose Commit -->
+**Choose a Commit**
+
+```
+branch=<commit_sha>
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/simulated-accelerators
+```
+
+<!-- TABS:END -->
+
+
+### Deploy
+
+```bash
 helmfile apply -n ${NAMESPACE}
 ```
 

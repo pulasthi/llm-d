@@ -43,25 +43,68 @@ Use the helmfile to compose and install the stack. The Namespace in which the st
 
 **_IMPORTANT:_** When using long namespace names (like `llm-d-inference-scheduler`), the generated pod hostnames may become too long and cause issues due to Linux hostname length limitations (typically 64 characters maximum). It's recommended to use shorter namespace names (like `llm-d`) and set `RELEASE_NAME_POSTFIX` to generate shorter hostnames and avoid potential networking or vLLM startup problems.
 
-**For GPU deployment (default):**
+### Prepare Installation Namespace
+
 ```bash
+# Create installation namespace and HF token
 export NAMESPACE=llm-d-inference-scheduler # or any other namespace (shorter names recommended)
 kubectl create namespace ${NAMESPACE}
+export HF_TOKEN="<your-hugging-face-token>"
+kubectl create secret generic llm-d-hf-token --from-literal=HF_TOKEN=${HF_TOKEN} -n ${NAMESPACE}
+```
 
-# Clone the repo and switch to the latest release tag 
-tag=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
-git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout "$tag"
+### Checkout the repo
 
+<!-- TABS:START -->
+
+<!-- TAB:Choose the Latest Release  -->
+**Choose the Latest Release**
+
+```
+branch=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
 cd guides/inference-scheduling
+```
+
+<!-- TAB:Choose Main -->
+**Choose Main Branch**
+
+```
+branch="main"
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/inference-scheduling
+```
+
+<!-- TAB:Choose Commit -->
+**Choose a Commit**
+
+```
+branch=<commit_sha>
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/inference-scheduling
+```
+
+<!-- TABS:END -->
+
+
+<!-- TABS:START -->
+<!-- TAB:GPU deployment  -->
+
+**GPU deployment**
+```bash
 helmfile apply -n ${NAMESPACE}
 ```
 
-**For CPU-only deployment:**
+<!-- TAB:CPU deployment  -->
+**CPU-only deployment:**
 ```bash
-export NAMESPACE=llm-d-inference-scheduler # or any other namespace (shorter names recommended)
-cd guides/inference-scheduling
 helmfile apply -e cpu -n ${NAMESPACE}
 ```
+
+<!-- TABS:END -->
 
 **_NOTE:_** You can set the `$RELEASE_NAME_POSTFIX` env variable to change the release names. This is how we support concurrent installs. Ex: `RELEASE_NAME_POSTFIX=inference-scheduling-2 helmfile apply -n ${NAMESPACE}`
 

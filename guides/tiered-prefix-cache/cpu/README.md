@@ -14,18 +14,54 @@ This guide provides recipes to offload prefix cache to CPU RAM via the vLLM nati
 
 First, set up a namespace for the deployment and create the HuggingFace token secret.
 
-```bash
-# Clone the repo and switch to the latest release tag 
-tag=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
-git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout "$tag"
+### Prepare Installation Namespace
 
-export NAMESPACE=llm-d-pfc-cpu # or any other namespace
+```bash
+# Create installation namespace and HF token
+export NAMESPACE=llm-d-pfc-cpu # or any other namespace (shorter names recommended)
 kubectl create namespace ${NAMESPACE}
 
 # NOTE: You must have your HuggingFace token stored in the HF_TOKEN environment variable.
 export HF_TOKEN="<your-hugging-face-token>"
 kubectl create secret generic llm-d-hf-token --from-literal=HF_TOKEN=${HF_TOKEN} -n ${NAMESPACE}
 ```
+
+### Checkout the repo
+
+<!-- TABS:START -->
+
+<!-- TAB:Choose the Latest Release  -->
+**Choose the Latest Release**
+
+```
+branch=$(curl -s https://api.github.com/repos/llm-d/llm-d/releases/latest | jq -r '.tag_name')
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/tiered-prefix-cache/cpu
+```
+
+<!-- TAB:Choose Main -->
+**Choose Main Branch**
+
+```
+branch="main"
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/tiered-prefix-cache/cpu
+```
+
+<!-- TAB:Choose Commit -->
+**Choose a Commit**
+
+```
+branch=<commit_sha>
+# Clone the repo and switch to the desired branch 
+git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
+cd guides/tiered-prefix-cache/cpu
+```
+
+<!-- TABS:END -->
+
 
 ### 1. Deploy Gateway and HTTPRoute
 
