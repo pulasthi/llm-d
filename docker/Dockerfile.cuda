@@ -282,16 +282,18 @@ ENV LANG="C.UTF-8" \
     VIRTUAL_ENV="/opt/vllm" \
     NVSHMEM_DIR="/opt/nvshmem-${NVSHMEM_VERSION}" \
     EFA_PREFIX="/opt/amazon/efa" \
+    UCX_PREFIX="/opt/ucx" \
     CUDA_HOME="/usr/local/cuda"
 
 ENV LD_LIBRARY_PATH="${EFA_PREFIX}/lib:${EFA_PREFIX}/lib64:\
+${UCX_PREFIX}/lib:${UCX_PREFIX}/lib64:\
 /opt/vllm/lib64/python${PYTHON_VERSION}/site-packages/torch/lib:\
 /usr/local/nvidia/lib:/usr/local/nvidia/lib64:${CUDA_HOME}/lib64:${CUDA_HOME}/compat:\
 /usr/local/lib:/usr/local/lib64:\
 ${NVSHMEM_DIR}/lib:${NVSHMEM_DIR}/lib64:\
 /usr/lib/x86_64-linux-gnu:/usr/lib/aarch64-linux-gnu/:\
 ${LD_LIBRARY_PATH}" \
-    PATH="${NVSHMEM_DIR}/bin:${PATH}" \
+    PATH="${NVSHMEM_DIR}/bin:${UCX_PREFIX}/bin:${PATH}" \
     CPATH="${NVSHMEM_DIR}/include:${CPATH}" \
     TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6;8.9;9.0;9.0a;10.0;12.0+PTX" \
     FLASHINFER_VERSION=${FLASHINFER_VERSION} \
@@ -329,12 +331,7 @@ RUN if [ "${TARGETOS:-rhel}" = "ubuntu" ]; then \
 COPY --from=builder /tmp/gdrcopy_libs /tmp/
 
 # Copy UCX libraries from builder
-COPY --from=builder /opt/ucx/lib/libucp* /usr/local/lib/
-COPY --from=builder /opt/ucx/lib/libucs* /usr/local/lib/
-COPY --from=builder /opt/ucx/lib/libuct* /usr/local/lib/
-COPY --from=builder /opt/ucx/lib/libucm* /usr/local/lib/
-COPY --from=builder /opt/ucx/lib /usr/local/lib/ucx/
-COPY --from=builder /opt/ucx/lib*/libucx*.so* /usr/local/lib/
+COPY --from=builder /opt/ucx /opt/ucx
 
 RUN if [ -d /tmp/gdrcopy_libs ]; then \
         if [ "${TARGETOS:-rhel}" = "ubuntu" ]; then \
