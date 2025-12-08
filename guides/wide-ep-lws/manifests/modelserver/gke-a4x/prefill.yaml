@@ -9,6 +9,7 @@ metadata:
   name: wide-ep-llm-d-prefill
 spec:
   leaderWorkerTemplate:
+    restartPolicy: None
     size: 4
     workerTemplate:
       metadata:
@@ -143,7 +144,7 @@ spec:
             value: "true"
           - name: NCCL_DEBUG
             value: INFO
-          image: ghcr.io/llm-d/llm-d-cuda:v0.4.0
+          image: ghcr.io/llm-d/llm-d-cuda-dev:pr-571
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
