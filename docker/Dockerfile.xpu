@@ -1,4 +1,4 @@
-ARG ONEAPI_VERSION=2025.1.3-0
+ARG ONEAPI_VERSION=2025.2.2-0
 
 FROM intel/deep-learning-essentials:${ONEAPI_VERSION}-devel-ubuntu24.04 AS vllm-base
 
@@ -80,5 +80,12 @@ RUN python3 -m pip install -e tests/vllm_test_utils
 COPY docker/scripts/xpu/install_nixl_from_source_ubuntu.py /tmp/install_nixl_from_source_ubuntu.py
 ENV NIXL_VERSION=0.7.0
 RUN python3 /tmp/install_nixl_from_source_ubuntu.py
+
+# PyJWT-2.7.0 will influence some wheel behaviors, remove its dist-info to avoid conflicts
+RUN rm /usr/lib/python3/dist-packages/PyJWT-2.7.0.dist-info/ -rf
+
+# remove torch bundled oneccl to avoid conflicts
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip uninstall oneccl oneccl-devel -y
 
 ENTRYPOINT ["python", "-m", "vllm.entrypoints.openai.api_server"]
