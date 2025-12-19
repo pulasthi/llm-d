@@ -8,18 +8,21 @@ RUN apt clean && apt-get update -y && \
     curl \
     git \
     wget \
-    vim 
+    vim
 
 RUN apt-get install -y ca-certificates && update-ca-certificates && \
     git config --global http.sslVerify false
 
 
+ARG VLLM_REPO="https://github.com/vllm-project/vllm.git"
+ARG VLLM_COMMIT_SHA="72506c98349d6bcd32b4e33eec7b5513453c1502"
+
 # Clone vLLM and build for CPU
 WORKDIR /workspace
 RUN --mount=type=cache,target=/var/cache/git \
-    git clone https://github.com/vllm-project/vllm.git && \
+    git clone ${VLLM_REPO} vllm && \
     cd vllm && \
-    git checkout c5f10cc139ec87e217f2bb56a677dd57394729f5
+    git checkout ${VLLM_COMMIT_SHA}
 
 
 WORKDIR /workspace/vllm
@@ -122,4 +125,3 @@ RUN python3 /workspace/install_nixl.py
 
 WORKDIR /workspace
 ENTRYPOINT ["/bin/bash"]
-
