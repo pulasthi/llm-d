@@ -28,63 +28,32 @@ For integration into the well-lit paths our standard for contribution is higher,
 > [!NOTE] 
 > The community can assist but is not responsible for keeping hardware guide variants updated. We reserve the right to remove stale examples and documentation with regard to hardware support.
 
-## Hardware-Specific Setup
+## Accelerator Resource Management
 
-### Intel XPU
+To enable llm-d accelerators to access hardware devices, the devices must be exposed to containers. Kubernetes provides two mechanisms to accomplish this:
 
-Intel XPU deployments require the Intel GPU Device Plugin to be installed in your Kubernetes cluster:
+1. [Device Plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)
+2. [Dynamic Resource Allocation (DRA)](https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/)
 
-```bash
-# Deploy Intel GPU Device Plugin v0.32.1
-kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin?ref=v0.32.1'
-```
+Typically, clusters use one mechanism or the other to expose accelerator devices. While it's possible to use both mechanisms simultaneously, this requires special configuration not covered in this document.
 
-This plugin enables Kubernetes to discover and schedule workloads on Intel GPUs. Make sure to install this before deploying any XPU-based inference workloads.
+### Device Plugins
 
-### Intel Gaudi (HPU)
+Each vendor provides Device Plugins for their accelerators. The following plugins are available by vendor:
 
-Intel Gaudi deployments require Dynamic Resource Allocation (DRA) support on Kubernetes. The Intel Resource Drivers for Kubernetes must be installed in your cluster to enable Gaudi HPU resource management.
+- [AMD ROCm Device Plugin](https://github.com/ROCm/k8s-device-plugin)
+- Google TPU Device Plugin (automatically enabled for TPU instances)
+- [Intel XPU Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/gpu_plugin/README.md)
+- [Intel Gaudi Device Plugin](https://docs.habana.ai/en/latest/Installation_Guide/Additional_Installation/Kubernetes_Installation/Intel_Gaudi_Kubernetes_Device_Plugin.html)
+- [NVIDIA GPU Device Plugin](https://github.com/NVIDIA/k8s-device-plugin)
 
-#### Prerequisites
+### Dynamic Resource Allocation
 
-- Kubernetes cluster version 1.34+ with DRA feature gates enabled
-- Intel Gaudi hardware (Gaudi 1, Gaudi 2, or Gaudi 3)
-- Habana driver installed on host nodes
+Each vendor provides DRA resource drivers for their accelerators. The following drivers and setup documentation are available by vendor:
 
-#### Installing Intel Resource Drivers
+- [AMD ROCm Resource Driver](https://github.com/ROCm/k8s-gpu-dra-driver)
+- [Prepare GKE for DRA workloads](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/set-up-dra)
+- [Intel XPU and Gaudi Resource Driver](https://github.com/intel/intel-resource-drivers-for-kubernetes)
+- [NVIDIA GPU Resource Driver](https://github.com/NVIDIA/k8s-dra-driver-gpu)
 
-Follow the installation instructions from the official repository:
-
-**Repository:** [https://github.com/intel/intel-resource-drivers-for-kubernetes](https://github.com/intel/intel-resource-drivers-for-kubernetes)
-
-```bash
-# Deploy Intel Gaudi DRA driver directly
-kubectl apply -k https://github.com/intel/intel-resource-drivers-for-kubernetes/deployments/gaudi/
-
-# Verify the installation
-kubectl get daemonsets -n intel-gaudi-resource-driver
-kubectl get deviceclass gaudi.intel.com
-```
-
-#### Configuration
-
-The llm-d configuration for Gaudi uses DRA instead of traditional device plugins. See the example configuration in `guides/inference-scheduling/ms-inference-scheduling/values-gaudi.yaml`:
-
-```yaml
-dra:
-  enabled: true
-  type: "intel-gaudi"
-  claimTemplates:
-  - name: intel-gaudi
-    class: gaudi.intel.com
-    match: "exactly"
-    count: 1
-```
-
-This DRA configuration allows Kubernetes to dynamically allocate Gaudi accelerators to workloads with fine-grained resource claims.
-
-#### Additional Resources
-
-- [Intel Gaudi documentation](https://docs.habana.ai/)
-- [Kubernetes Dynamic Resource Allocation](https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/)
-- [Intel Resource Drivers for Kubernetes GitHub](https://github.com/intel/intel-resource-drivers-for-kubernetes)
+Since DRA is a newer Kubernetes feature, some feature gates may be required. Consult your vendor and cluster provider documentation for specific requirements.
