@@ -60,7 +60,12 @@ print_diagnostics() {
   echo ""
   
   echo "=== Gateway Pod Logs (last 50 lines) ==="
+  # Try multiple label selectors to find gateway pod
   local gw_pod=$(kubectl get pods -n "$ns" -l "app.kubernetes.io/name=inference-gateway" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -z "$gw_pod" ]]; then
+    # Try alternative label selector for istio gateway
+    gw_pod=$(kubectl get pods -n "$ns" | grep "inference-gateway" | head -1 | awk '{print $1}' 2>/dev/null || true)
+  fi
   if [[ -n "$gw_pod" ]]; then
     echo "Gateway pod: $gw_pod"
     kubectl logs -n "$ns" "$gw_pod" --tail=50 || true
