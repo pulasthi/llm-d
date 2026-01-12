@@ -128,6 +128,16 @@ jobs:
             | tee ~/inference-scheduling-deployment.log
           echo "---------------------------------------" >> ~/inference-scheduling-cpu-deployment.log
 
+      - name: Apply HTTPRoute
+        run: |
+          cd guides/inference-scheduling
+          # Substitute the gateway and inference pool names based on RELEASE_NAME_POSTFIX
+          sed -e "s/infra-inference-scheduling-inference-gateway/infra-${RELEASE_NAME_POSTFIX}-inference-gateway/g" \
+              -e "s/gaie-inference-scheduling/gaie-${RELEASE_NAME_POSTFIX}/g" \
+              -e "s/llm-d-inference-scheduling/llm-d-${RELEASE_NAME_POSTFIX}/g" \
+              httproute.yaml | kubectl apply -f - -n "${NAMESPACE}"
+          echo "HTTPRoute applied with RELEASE_NAME_POSTFIX=${RELEASE_NAME_POSTFIX}"
+
       - name: fetch helm manifests - prepare for upload
         run: |
           for release_name in "${INFRA_RELEASE_NAME}" "${GAIE_RELEASE_NAME}" "${MS_RELEASE_NAME}"; do
@@ -235,5 +245,10 @@ jobs:
         if: always()
         run: |
           cd guides/inference-scheduling
+          # Delete HTTPRoute with substituted name
+          sed -e "s/infra-inference-scheduling-inference-gateway/infra-${RELEASE_NAME_POSTFIX}-inference-gateway/g" \
+              -e "s/gaie-inference-scheduling/gaie-${RELEASE_NAME_POSTFIX}/g" \
+              -e "s/llm-d-inference-scheduling/llm-d-${RELEASE_NAME_POSTFIX}/g" \
+              httproute.yaml | kubectl delete -f - -n "${NAMESPACE}" || true
           helmfile destroy -e cpu -n "${NAMESPACE}"
           kubectl delete ns ${NAMESPACE}

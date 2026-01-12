@@ -128,10 +128,15 @@ jobs:
             | tee ~/pd-cpu-deployment.log
           echo "---------------------------------------" >> ~/pd-cpu-deployment.log
 
-      # - name: Apply HTTPRoute
-      #   run: |
-      #     cd guides/pd-disaggregation
-      #     kubectl apply -f httproute.yaml -n "${NAMESPACE}"
+      - name: Apply HTTPRoute
+        run: |
+          cd guides/pd-disaggregation
+          # Substitute the gateway and inference pool names based on RELEASE_NAME_POSTFIX
+          sed -e "s/infra-pd-inference-gateway/infra-${RELEASE_NAME_POSTFIX}-inference-gateway/g" \
+              -e "s/gaie-pd/gaie-${RELEASE_NAME_POSTFIX}/g" \
+              -e "s/llm-d-pd-disaggregation/llm-d-${RELEASE_NAME_POSTFIX}/g" \
+              httproute.yaml | kubectl apply -f - -n "${NAMESPACE}"
+          echo "HTTPRoute applied with RELEASE_NAME_POSTFIX=${RELEASE_NAME_POSTFIX}"
 
       - name: fetch helm manifests - prepare for upload
         run: |
@@ -243,5 +248,10 @@ jobs:
         if: always()
         run: |
           cd guides/pd-disaggregation
+          # Delete HTTPRoute with substituted name
+          sed -e "s/infra-pd-inference-gateway/infra-${RELEASE_NAME_POSTFIX}-inference-gateway/g" \
+              -e "s/gaie-pd/gaie-${RELEASE_NAME_POSTFIX}/g" \
+              -e "s/llm-d-pd-disaggregation/llm-d-${RELEASE_NAME_POSTFIX}/g" \
+              httproute.yaml | kubectl delete -f - -n "${NAMESPACE}" || true
           helmfile destroy -e cpu -n "${NAMESPACE}"
           kubectl delete ns ${NAMESPACE}
