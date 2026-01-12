@@ -5,8 +5,7 @@ on:
     paths:
       - 'guides/pd-disaggregation/ms-pd/values_cpu.yaml'
       - 'guides/pd-disaggregation/helmfile.yaml.gotmpl'
-      - 'docker/Dockerfile.cpu'
-      - 'docker/install_nixl.py'
+      # Docker paths are handled by build-image.yml -> workflow_call to avoid duplicate runs
   schedule:
     - cron: '0 10 * * *'  # 3AM PST (10:00 UTC)
   workflow_dispatch:
