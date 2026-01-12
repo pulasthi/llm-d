@@ -12,13 +12,9 @@ accelerator:
   type: cpu
 
 # Routing configuration - required for inference-scheduling
+# No sidecar proxy needed for basic inference scheduling (only needed for PD disaggregation)
 routing:
   servicePort: 8000
-  proxy:
-
-    image: ghcr.io/llm-d/llm-d-routing-sidecar:v0.4.0-rc.1
-    connector: nixlv2
-    secure: false
 
 decode:
   create: true
@@ -31,7 +27,7 @@ decode:
       interval: "30s"
   containers:
   - name: "vllm"
-    image: ghcr.io/llm-d/llm-d-cpu-dev:sha-1b3416d
+    image: ghcr.io/llm-d/llm-d-cpu-dev:pr-434
     imagePullPolicy: IfNotPresent
     modelCommand: vllmServe
     securityContext: # NUMA cross-node related
@@ -50,7 +46,7 @@ decode:
       - name: VLLM_CPU_KVCACHE_SPACE
         value: "32"
     ports:
-      - containerPort: 8200
+      - containerPort: 8000
         protocol: TCP
     resources:
       limits:
@@ -69,7 +65,7 @@ decode:
     startupProbe:
       httpGet:
         path: /v1/models
-        port: 8200
+        port: 8000
       initialDelaySeconds: 15
       periodSeconds: 30
       timeoutSeconds: 5
@@ -77,14 +73,14 @@ decode:
     livenessProbe:
       httpGet:
         path: /health
-        port: 8200
+        port: 8000
       periodSeconds: 10
       timeoutSeconds: 5
       failureThreshold: 3
     readinessProbe:
       httpGet:
         path: /v1/models
-        port: 8200
+        port: 8000
       periodSeconds: 5
       timeoutSeconds: 2
       failureThreshold: 3
